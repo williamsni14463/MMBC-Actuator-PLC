@@ -128,6 +128,10 @@ We dont have one of these, so use jumper wires directly onto the Raspberry Pi GP
    - **Password:** `openplc`
 3. Go to **Hardware** → select **Raspberry Pi** → click **Save Changes**
 
+### Change Pi Configuration
+
+1. With the Editor open, select Device -> Configuration in the top left
+
 ### Upload the Program
 
 1. Go to **Programs** in the left panel
