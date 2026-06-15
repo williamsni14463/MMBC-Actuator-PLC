@@ -150,12 +150,11 @@ sudo ./start_openplc.sh
 hostname -I
 ```
 4. Connect to device
-
-
+   > It may ask you to create a username & password. Choose something memorable such as username: openplc, password: openplc
 
 ### Upload the Program
 
-1.
+1. Go back to the runtime web browser
 2. Go to **Programs** in the left panel of the runtime
 3. Click **Choose File** → select your `Hello World.st` file
    > This file may be hard to find at first. Navigate to where your project directory is and follow this path: Project Folder -> build -> OpenPLC Runtime v3 -> src -> "program_name".st
