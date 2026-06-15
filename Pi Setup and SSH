@@ -1,21 +1,77 @@
-Download raspberry pi imager’
-Connect microSD to computer
-Open Imager and select version of PI
-Choose Raspberry Pi OS (64bit)
-Select your drive
-Enter a short, easy hostname such as mypi
-Enter your location. Capital city DC, timezone America/Chicago
-Enter an easily memorable username and password
-Enter SSID: “fgz” in open network’
-Enable SSH
-Write to the drive and wait for everything to install and verify ~10-15 min
-Plug SD, power cord, and hdmi into the pi. Let boot up ~2-3 min
-At first wifi will not be connected, with the pi connected to a monitor, open the terminal and type “ifconfig -a”
-Under the “eth0:” column there will be a 12 digit MAC address in the form XX:XX:XX:XX:XX:XX
-Copy this address and go to device registration for fermilab personal devices, enter this MAC address for the device registration
-The Pi should be able to connect to fgz on its own now!
-To SSH into the pi, make sure you’re using linux or a linux subsystem on windows, and go to powershell.
-On the pi, type in the terminal “hostname -I” an ip address will appear
-On your computer in powershell, enter “ssh hostname that you chose during setup@*IP address we just found on the pi*” and click enter
-Now you have successfully SSH’d into the pi
+# Raspberry Pi Setup + Fermilab WiFi + SSH Guide
 
+## 1. Install Raspberry Pi Imager
+
+Download Raspberry Pi Imager here:
+
+https://www.raspberrypi.com/software/
+
+Install and open the application.
+
+---
+
+## 2. Prepare microSD Card
+
+- Insert microSD card into your computer
+- Open Raspberry Pi Imager
+
+---
+
+## 3. Flash Raspberry Pi OS
+
+### Select Operating System
+Choose:
+- Raspberry Pi OS (64-bit)
+
+### Select Storage
+Choose your microSD card
+
+---
+
+## 4. Configure Settings (IMPORTANT)
+
+Click the settings (gear icon) before writing.
+
+### General
+- Hostname: `mypi`
+- Username: choose something simple
+- Password: set a memorable password
+
+### Location
+- Timezone: `America/Chicago`
+- Location: Washington, DC
+
+### Network
+- SSID: `fgz`
+- Network type: Open network
+
+### Services
+- Enable SSH
+
+---
+
+## 5. Write to SD Card
+
+Click **Write** and wait:
+- ~10–15 minutes
+- Includes verification
+
+---
+
+## 6. First Boot
+
+Insert SD card into Raspberry Pi and connect:
+- Power
+- HDMI
+- Keyboard (optional)
+
+Boot time: ~2–3 minutes
+
+---
+
+## 7. Find MAC Address (WiFi Registration)
+
+Run on the Pi:
+
+```bash
+ifconfig -a
