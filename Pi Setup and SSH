@@ -1,0 +1,21 @@
+Download raspberry pi imager’
+Connect microSD to computer
+Open Imager and select version of PI
+Choose Raspberry Pi OS (64bit)
+Select your drive
+Enter a short, easy hostname such as mypi
+Enter your location. Capital city DC, timezone America/Chicago
+Enter an easily memorable username and password
+Enter SSID: “fgz” in open network’
+Enable SSH
+Write to the drive and wait for everything to install and verify ~10-15 min
+Plug SD, power cord, and hdmi into the pi. Let boot up ~2-3 min
+At first wifi will not be connected, with the pi connected to a monitor, open the terminal and type “ifconfig -a”
+Under the “eth0:” column there will be a 12 digit MAC address in the form XX:XX:XX:XX:XX:XX
+Copy this address and go to device registration for fermilab personal devices, enter this MAC address for the device registration
+The Pi should be able to connect to fgz on its own now!
+To SSH into the pi, make sure you’re using linux or a linux subsystem on windows, and go to powershell.
+On the pi, type in the terminal “hostname -I” an ip address will appear
+On your computer in powershell, enter “ssh hostname that you chose during setup@*IP address we just found on the pi*” and click enter
+Now you have successfully SSH’d into the pi
+
