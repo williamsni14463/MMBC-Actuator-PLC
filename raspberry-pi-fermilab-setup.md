@@ -1,4 +1,4 @@
-# Raspberry Pi Setup + Fermilab WiFi + SSH Guide
+# Raspberry Pi SSH Setup
 
 ## 1. Install Raspberry Pi Imager
 
