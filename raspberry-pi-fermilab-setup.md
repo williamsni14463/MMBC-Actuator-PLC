@@ -97,9 +97,11 @@ SSH means Secure Shell, and it's a way of controlling a computer remotely. This 
 
 After ~5 min, the service desk should have approved the request tpo register the pi on the internet
 
-Open Windows Powershell and run the command:
+For Windows, open Windows Powershell and type the following command
+For Mac, ⌘ + Space → type Terminal → Enter |or go to| Applications → Utilities → Terminal
+
 ```bash
-ssh **YOUR-USERNAME**@**PI-IP-ADDRESS
+ssh "YOUR-USERNAME"@"PI-IP-ADDRESS"
 ```
 Example: 
 username: cole & pi-ip: 131.235.173.216 
