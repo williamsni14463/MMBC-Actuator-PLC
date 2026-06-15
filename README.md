@@ -1,6 +1,6 @@
 # MMBC-Actuator-PLC
 
-This repository covers the steps to create a Programmable Logic Controller from a Raspebrry Pi and an opensource program called OpenPLC
+This repository covers the steps to create a Programmable Logic Controller from a Raspberry Pi and an opensource program called OpenPLC
 
 Work through the files starting at 1
 
