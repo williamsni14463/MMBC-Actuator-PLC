@@ -120,6 +120,19 @@ We dont have one of these, so use jumper wires directly onto the Raspberry Pi GP
 
 ## 6. Uploading and Running the Program
 
+### Starting the Runtime
+
+1. Open the raspberry pi terminal via SSH
+2. Enter the command:
+```bash
+cd OpenPLC_v3
+```
+3. Then enter the command:
+```bash
+sudo ./start_openplc.sh 
+```
+4. Allow the runtime to startup
+
 ### Set Hardware Layer
 
 1. Open the runtime at `http://YOUR_PI_IP:8080`
@@ -131,12 +144,24 @@ We dont have one of these, so use jumper wires directly onto the Raspberry Pi GP
 ### Change Pi Configuration
 
 1. With the Editor open, select Device -> Configuration in the top left
+2. Choose "OpenPLC Runtime v3" for Device
+3. Enter the Pi IP address found from the command:
+```bash
+hostname -I
+```
+4. Connect to device
+
+
 
 ### Upload the Program
 
-1. Go to **Programs** in the left panel
-2. Click **Choose File** → select your `Hello World.st` file
-3. Click **Upload Program**
+1.
+2. Go to **Programs** in the left panel of the runtime
+3. Click **Choose File** → select your `Hello World.st` file
+   > This file may be hard to find at first. Navigate to where your project directory is and follow this path: Project Folder -> build -> OpenPLC Runtime v3 -> src -> "program_name".st
+
+  > We want to choose that .st file
+5. Click **Upload Program**
 
 The `.st` file will be compiled to C++ automatically.
 
@@ -148,13 +173,13 @@ The `.st` file will be compiled to C++ automatically.
 ### Monitor I/O
 
 1. Click **Monitor** to observe pushbutton and LED states in real time
-2. Each press of the pushbutton toggles the LED (red → green in the monitor)
+2. Each press of the pushbutton toggles the LED (False -> True in the monitor page)
 
-> The Monitor can serve as a simple HMI/diagnostic tool for watching physical I/O operation.
+> The Monitor can serve as a simple diagnostic tool for watching physical I/O operation.
 
 ---
 
-## Reference
+## References
 
 - [OpenPLC Runtime Documentation](https://autonomylogic.com/docs/installing-openplc-runtime-on-linux-systems/)
 - [OpenPLC Physical Addressing](https://autonomylogic.com/docs/2-4-physical-addressing/)
