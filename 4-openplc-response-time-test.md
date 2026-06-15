@@ -1,4 +1,4 @@
-# OpenPLC Response Time Test (Raspberry Pi)
+# OpenPLC Response Time Test
 
 This test measures how quickly the PLC reads a button press and reacts by turning on the LED
 
