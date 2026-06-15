@@ -31,18 +31,16 @@ Choose your microSD card
 
 ## 4. Configure Settings (IMPORTANT)
 
-Click the settings (gear icon) before writing.
-
 ### General
 
-- Hostname: `mypi`
-- Username: choose something simple
+- Hostname: choose something simple such as "mypi"
+- Username: choose something mnemorable like your first name
 - Password: set a memorable password
 
 ### Location
 
 - Timezone: `America/Chicago`
-- Location: Washington, DC
+- Capital City: Washington, DC
 
 ### Network
 
@@ -68,7 +66,7 @@ Click **Write** and wait:
 Insert SD card into Raspberry Pi and connect:
 - Power
 - HDMI
-- Keyboard (optional)
+- Keyboard, Mouse
 
 Boot time: ~2–3 minutes
 
