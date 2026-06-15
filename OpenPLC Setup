@@ -1,0 +1,7 @@
+Once SSH’d into the pi, no commands will work unless date and time are correct. To check, type the following command into the terminal: timedatectl
+If date/time is different than what it should, enter the following command customized to your current time, it doesn't need to be accurate to the second: sudo date -s "15 JUN 2026 11:15:00" Example for June 15th at 11:15 AM.
+Once SSH’d into the pi from your computer enter the following commands, one at a time and let each run before sending the next:
+git clone https://github.com/thiagoralves/OpenPLC_v3.git
+cd OpenPLC_v3
+./install.sh rpi
+Next, install the OpenPLC Editor on your computer, not the pi: https://autonomylogic.com/download
