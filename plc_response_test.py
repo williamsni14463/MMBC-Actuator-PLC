@@ -1,17 +1,10 @@
 """
-PLC Response Time Test (polling version)
+PLC Response Time Test
 =========================================
-Measures latency between button press (PLC input) and LED turning on (PLC output).
-Uses polling instead of edge detection to avoid conflicts with OpenPLC's GPIO claims.
-
-Wiring:
-  - Button    : Pin 11 / GPIO17  (PLC input  IX0.3)
-  - LED       : Pin 16 / GPIO23  (PLC output QX0.2)
-  - Monitor   : Pin 18 / GPIO24  (tap from GPIO23 side of 330ohm resistor)
+Measures latency between button press and LED activation
 
 Usage:
   sudo python3 plc_response_test.py
-  sudo python3 plc_response_test.py --samples 100 --out results.csv
 """
 
 import RPi.GPIO as GPIO
