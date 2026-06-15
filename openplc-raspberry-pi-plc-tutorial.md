@@ -92,6 +92,11 @@ This tutorial uses an extension/breakout board with a ribbon cable to simplify w
 
 We dont have one of these, so use jumper wires directly onto the Raspberry Pi GPIO
 
+<img width="800" height="687" alt="image" src="https://github.com/user-attachments/assets/317f1366-483a-426b-871c-0f54fa45fd09" />
+
+<img width="800" height="492" alt="image" src="https://github.com/user-attachments/assets/6d3f942f-cd8a-4783-b5fb-9cc969a3c2f3" />
+
+
 ---
 
 ## 5. Writing the Ladder Logic (OpenPLC Editor)
@@ -100,6 +105,7 @@ We dont have one of these, so use jumper wires directly onto the Raspberry Pi GP
    > Be sure to NOT save in OneDrive
 
 2. Assign I/O tags using the variable declaration section:
+
    Variable #1:
    Name: PB1_Switch | Class: Local | Type: BOOL | Location: %IX0.3 |
 
@@ -107,7 +113,7 @@ We dont have one of these, so use jumper wires directly onto the Raspberry Pi GP
    Name: Hello_World_LED | Class: Local | Type: BOOL | Location: %QX0.2 |
 
 3. Add a rung to the ladder diagram and create the following
-4. <img width="800" height="358" alt="image" src="https://github.com/user-attachments/assets/87864bdd-56f0-4dce-affc-0c3e91a000d9" />
+<img width="800" height="358" alt="image" src="https://github.com/user-attachments/assets/87864bdd-56f0-4dce-affc-0c3e91a000d9" />
 
 
 ---
