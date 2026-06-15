@@ -8,29 +8,18 @@ Using a Raspberry Pi and the OpenPLC software platform, create a simple PLC that
 
 ## Overview
 
-OpenPLC provides a control engineering development platform that transforms various microcontrollers into programmable logic controllers. It is compatible with Arduino Uno, ESP32, RP2040, and single-board computers like the Raspberry Pi — using an editor, a runtime engine, and a web server.
+I will do my best to summarize the steps to this test and provide some help, but try to follow the tutorial to your best ability and debug/research when things go wrong to better understand.
 
 ---
 
 ## 1. OpenPLC Runtime on the Raspberry Pi
 
-The OpenPLC runtime has an integrated web server for configuring runtime parameters. Key data types include:
-
-| Tag | Type       | Size     |
-|-----|------------|----------|
-| X   | Bit        | 1-bit    |
-| B   | Byte       | 8-bits   |
-| W   | Word       | 16-bits  |
-| D   | Double Word| 32-bits  |
-| L   | Long Word  | 64-bits  |
-
+The OpenPLC runtime has an integrated web server for configuring runtime parameters, we accessed this in the previous section.
 Access the runtime web server using:
 
 ```text
 http://YOUR_PI_IP_ADDRESS:8080
 ```
-
-> Find your Pi's IP address by hovering over the Wi-Fi icon in the taskbar.
 
 ---
 
@@ -57,42 +46,11 @@ Verify the install again:
 ```bash
 gpio -v
 ```
-
-### 2b. OpenPLC Runtime
-
-Return to the home directory:
-
-```bash
-cd
-```
-
-Clone the OpenPLC repository:
-
-```bash
-git clone https://github.com/thiagoralves/OpenPLC_v3.git
-```
-
-Enter the directory:
-
-```bash
-cd OpenPLC_v3
-```
-
-Run the installation script (this takes several minutes):
-
-```bash
-./install.sh rpi
-```
-
-Once complete, navigate to `http://YOUR_PI_IP:8080` in a browser — the runtime login screen should appear.
-
-> For more thorough documentation, see the [OpenPLC official website](https://autonomylogic.com/docs/installing-openplc-runtime-on-linux-systems/).
-
 ---
 
 ## 3. Pin Mapping: Raspberry Pi → PLC
 
-OpenPLC uses the **body-pin format** (not GPIO numbers) for I/O addressing.
+OpenPLC uses the **body-pin format** for I/O addressing.
 
 ### Inputs (left-side pins, odd numbers)
 
@@ -119,8 +77,10 @@ OpenPLC uses the **body-pin format** (not GPIO numbers) for I/O addressing.
 ## 4. Wiring the Circuit
 
 This example project uses:
-- A **tactile pushbutton switch** with a **10kΩ pulldown resistor** (input)
+- A **pushbutton switch** with a **10kΩ resistor** (input)
 - A **330Ω resistor** in series with an **LED** (output)
+  > We only have 220Ω & 10kΩ resistors, the 220Ω will work just fine in place of the 330Ω.
+  
 
 Connections:
 - **+3.3V** → breadboard power rail
@@ -128,22 +88,27 @@ Connections:
 - **Pin 11 (GPIO 17)** → pushbutton input
 - **Pin 16 (GPIO 23)** → LED output
 
-An extension/breakout board with a ribbon cable can be used to simplify wiring to the 40-pin header. Alternatively, use jumper wires directly on the Pi header.
+This tutorial uses an extension/breakout board with a ribbon cable to simplify wiring to the 40-pin header. 
+
+We dont have one of these, so use jumper wires directly onto the Raspberry Pi GPIO
 
 ---
 
 ## 5. Writing the Ladder Logic (OpenPLC Editor)
 
-1. Install the **OpenPLC Editor** on your computer (not the Pi):  
-   https://autonomylogic.com/download
+1. Create a new project in the OpenPLC Editor using the language Ladder Diagram
+   > Be sure to NOT save in OneDrive
 
-2. Create a new **"Hello World" Ladder Diagram (LD)** project.
+2. Assign I/O tags using the variable declaration section:
+   Variable #1:
+   Name: PB1_Switch | Class: Local | Type: BOOL | Location: %IX0.3 |
 
-3. Assign I/O tags using the **physical body-pin addressing**:
-   - Input: `IX0.3` → Pin 11 (pushbutton)
-   - Output: `QX0.2` → Pin 16 (LED)
+   Variable #2:
+   Name: Hello_World_LED | Class: Local | Type: BOOL | Location: %QX0.2 |
 
-4. Export the program as a **`.st` (structured text) file** using the orange download arrow in the editor toolbar.
+3. Add a rung to the ladder diagram and create the following
+4. <img width="800" height="358" alt="image" src="https://github.com/user-attachments/assets/87864bdd-56f0-4dce-affc-0c3e91a000d9" />
+
 
 ---
 
