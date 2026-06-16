@@ -101,20 +101,21 @@ SSH means Secure Shell, and it's a way of controlling a computer remotely. This 
 
 After ~5 min, the service desk should have approved the request to register the pi on the internet
 
+To get the IP address of the Pi, type the following command inside the raspberry pi terminal:
+
+```bash
+hostname -I
+```
 For Windows, open Windows Powershell and type the following command
 For Mac, ⌘ + Space → type Terminal → Enter |or go to| Applications → Utilities → Terminal
+
+Then to SSH into the pi, type the following command from your computer terminal.
 
 ```bash
 ssh "YOUR-USERNAME"@"PI-IP-ADDRESS"
 ```
 Example: 
 username: cole & pi-ip: 131.235.173.216 
-
-To get the IP address of the Pi, type the following command inside the raspberry pi terminal:
-
-```bash
-hostname -I
-```
 
 ```bash
 ssh cole@131.235.173.216
