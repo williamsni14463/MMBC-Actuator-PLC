@@ -34,7 +34,7 @@ Choose your microSD card
 ### General
 
 - Hostname: choose something simple such as "mypi"
-- Username: choose something mnemorable like your first name
+- Username: choose something memorable like your first name
 - Password: set a memorable password
 
 ### Location
