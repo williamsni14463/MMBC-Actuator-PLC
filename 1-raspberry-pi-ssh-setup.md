@@ -110,6 +110,12 @@ ssh "YOUR-USERNAME"@"PI-IP-ADDRESS"
 Example: 
 username: cole & pi-ip: 131.235.173.216 
 
+To get the IP address of the Pi, type the following command inside the raspberry pi terminal:
+
+```bash
+hostname -I
+```
+
 ```bash
 ssh cole@131.235.173.216
 ```
