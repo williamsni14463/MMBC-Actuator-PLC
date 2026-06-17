@@ -37,7 +37,7 @@ GPIO.setwarnings(False)
 GPIO.setup(BUTTON_PIN,  GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
 GPIO.setup(MONITOR_PIN, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
 
-# Helpers
+# Polling Helper
 def wait_for_pin(pin, target_state, timeout_s):
     """Poll a pin until it hits target_state. Returns (True, timestamp) or (False, None)."""
     deadline = time.perf_counter() + timeout_s
