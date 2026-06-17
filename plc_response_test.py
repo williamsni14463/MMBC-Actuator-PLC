@@ -15,11 +15,11 @@ import statistics
 import sys
 from datetime import datetime
 
-# ── Pin config ────────────────────────────────────────────────────────────────
+# Pin config
 BUTTON_PIN  = 17   # GPIO17 BCM — PLC input
 MONITOR_PIN = 24   # GPIO24 BCM — tapped from LED output line
 
-# ── CLI args ──────────────────────────────────────────────────────────────────
+# CLI args
 parser = argparse.ArgumentParser(description="Measure OpenPLC input→output latency")
 parser.add_argument("--samples",     type=int,   default=50,
                     help="Number of presses to record (default: 50)")
@@ -31,13 +31,13 @@ args = parser.parse_args()
 
 TIMEOUT_S = args.timeout_ms / 1000.0
 
-# ── GPIO setup ────────────────────────────────────────────────────────────────
+# GPIO setup
 GPIO.setmode(GPIO.BCM)
 GPIO.setwarnings(False)
 GPIO.setup(BUTTON_PIN,  GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
 GPIO.setup(MONITOR_PIN, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
 
-# ── Helpers ───────────────────────────────────────────────────────────────────
+# Helpers
 def wait_for_pin(pin, target_state, timeout_s):
     """Poll a pin until it hits target_state. Returns (True, timestamp) or (False, None)."""
     deadline = time.perf_counter() + timeout_s
@@ -47,7 +47,7 @@ def wait_for_pin(pin, target_state, timeout_s):
         if time.perf_counter() > deadline:
             return False, None
 
-# ── Test loop ─────────────────────────────────────────────────────────────────
+# Test loop
 print(f"\n{'='*52}")
 print(f"  OpenPLC Response Time Test")
 print(f"  {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
@@ -66,21 +66,19 @@ try:
     for i in range(args.samples):
         print(f"  [{i+1:>3}/{args.samples}]  Press the button...", end="", flush=True)
 
-        # Make sure button is released and LED is off before starting
         while GPIO.input(BUTTON_PIN)  == GPIO.HIGH: time.sleep(0.005)
         while GPIO.input(MONITOR_PIN) == GPIO.HIGH: time.sleep(0.005)
         time.sleep(0.05)  # short settle
 
-        # Wait for button press (rising edge on GPIO17)
         ok, _ = wait_for_pin(BUTTON_PIN, GPIO.HIGH, timeout_s=30.0)
         if not ok:
             print("\n  No button press detected in 30 s. Exiting.")
             break
 
-        # Record t0 immediately after detecting the press
+        # Records t0 immediately after detecting the press
         t0 = time.perf_counter()
 
-        # Poll monitor pin until LED line goes high (PLC responded)
+        # Poll monitor pin until PLC responded
         ok, t1 = wait_for_pin(MONITOR_PIN, GPIO.HIGH, timeout_s=TIMEOUT_S)
 
         if not ok:
@@ -103,7 +101,7 @@ except KeyboardInterrupt:
 finally:
     GPIO.cleanup()
 
-# ── Summary ───────────────────────────────────────────────────────────────────
+# Summary
 if not results:
     print("\n  No results collected.")
     sys.exit(0)
@@ -127,7 +125,7 @@ print(f"  Std dev  : {std_ms:8.3f} ms")
 print(f"  95th pct : {p95_ms:8.3f} ms")
 print(f"{'='*52}\n")
 
-# ── CSV ───────────────────────────────────────────────────────────────────────
+# Export to a CSV
 with open(args.out, "w", newline="") as f:
     writer = csv.writer(f)
     writer.writerow(["sample", "latency_ms"])
