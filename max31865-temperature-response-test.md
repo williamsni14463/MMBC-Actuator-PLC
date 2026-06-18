@@ -53,6 +53,9 @@ Both red wires go in the left two terminals, both blue wires go in the right two
 
 > While there are 2-3 wire configurations, the 4-wire configuration cancels out wire resistance entirely. Making it the most accurate option.
 
+<img width="515" height="296" alt="image" src="https://github.com/user-attachments/assets/1e07919a-08e7-40fc-aa0b-db933c176731" />
+
+
 ### PLC output monitor tap
 
 Tap a jumper wire in between the resistor and pin 16 jumper wire
