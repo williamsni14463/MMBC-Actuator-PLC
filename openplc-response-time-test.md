@@ -2,7 +2,7 @@
 
 This test measures how quickly the PLC reads a button press and reacts by turning on the LED
 
-**Everything from the previous tutorial carries over:**
+**Everything from the '3-example-raspberry-pi-plc' tutorial carries over:**
 - Wiring is identical (button on Pin 11 / GPIO17, LED on Pin 16 / GPIO23)
 - The OpenPLC ladder logic program does not need to be changed
 - The OpenPLC Runtime must be running with the PLC started in the browser dashboard
