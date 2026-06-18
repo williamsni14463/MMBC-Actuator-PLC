@@ -2,9 +2,9 @@
 
 Measures how fast OpenPLC can detect a temperature threshold crossing and react with an output — the thermal equivalent of the button/LED latency test.
 
-**What's new vs the button/LED test:**
-- The MAX31865 breakout board reads the RTD sensor over SPI (a 4-wire communication protocol)
-- Python polls the sensor continuously and notes the moment the temperature crosses a threshold — that's t₀
+**General Overview**
+- A MAX31865 breakout board reads the PT100 RTD (resistance temperature detector) sensor over SPI (a 4-wire communication protocol)
+- Python will poll the sensor continuously and notes the exact moment the temperature crosses a threshold — that's t₀
 - OpenPLC reads a GPIO input (driven by Python when the threshold is crossed) and turns on an output — that's t₁
 - Latency = t₁ − t₀
 
@@ -12,15 +12,15 @@ Measures how fast OpenPLC can detect a temperature threshold crossing and react 
 
 ## 1. Enable SPI on the Pi
 
-SPI is disabled by default. Enable it once:
+SPI is disabled by default. Run this line of code to
 
 ```bash
 sudo raspi-config
 ```
 
-Go to **Interface Options → SPI → Enable**, then reboot.
+Go to **Interface Options → SPI → Enable**, then reboot the pi
 
-Verify:
+Verify it is enabled with:
 
 ```bash
 ls /dev/spi*
@@ -51,11 +51,11 @@ RED    RED     BLUE    BLUE
 
 Both red wires go in the left two terminals, both blue wires go in the right two.
 
-> The 4-wire configuration cancels out wire resistance entirely — most accurate option.
+> While there are 2-3 wire configurations, the 4-wire configuration cancels out wire resistance entirely. Making it the most accurate option.
 
-### PLC output monitor tap (same as button/LED test)
+### PLC output monitor tap
 
-Keep the existing monitor wire:
+Tap a jumper wire in between the resistor and pin 16 jumper wire
 
 ```
 Pin 16 (GPIO23) ──┬──── 330Ω ──── LED ──── GND
@@ -77,13 +77,13 @@ Python drives GPIO17 HIGH at the threshold crossing. The PLC reads it and turns 
 
 ## 3. OpenPLC Program
 
-No changes needed to the existing ladder logic. The same rung works:
+No changes needed to the existing ladder logic from the last 2 examples. The same rung works:
 
 ```
 |----[ IX0.3 ]----( QX0.2 )----|
 ```
 
-Python replaces the button press with a GPIO signal when temperature crosses the threshold.
+Instead of a button driving a reaction, a change in temperature drives the system.
 
 ---
 
@@ -96,9 +96,9 @@ sudo pip3 install adafruit-circuitpython-max31865 --break-system-packages
 
 ---
 
-## 5. Sanity Check
+## 5. Check
 
-Before running the full test, confirm the sensor reads correctly:
+Before running the full test, test to see if the sensor reads correctly:
 
 ```bash
 sudo python3 - <<'EOF'
@@ -115,7 +115,7 @@ print(f"Resistance:  {sensor.resistance:.2f} Ω")
 EOF
 ```
 
-At room temperature a PT100 should read ~20–25°C and ~107–110Ω. If the reading is wrong, check SPI is enabled and the CS wire is on Pin 29.
+> At room temperature, a PT100 should read ~20–25°C and ~107–110Ω. If the reading is wrong, check SPI is enabled and the CS wire is on Pin 29.
 
 ---
 
@@ -139,7 +139,7 @@ Make sure OpenPLC Runtime is running with the PLC started, then:
 sudo python3 ~/temperature_response_test.py
 ```
 
-Default threshold is 35°C. To change it:
+The code sets a default threshold to 35°C. To change it:
 
 ```bash
 sudo python3 ~/temperature_response_test.py --threshold 40.0
@@ -155,44 +155,9 @@ sudo python3 ~/temperature_response_test.py --threshold 40.0
 3. PLC reacts → LED turns on → script records t₁ → prints latency
 4. Remove sensor and let it cool 2°C below threshold → repeat
 
-```
-========================================================
-  MAX31865 Temperature Response Test
-  2026-06-15 11:15:00
-========================================================
-  Sensor    : PT100
-  Threshold : 35.0 °C (above)
-  Poll rate : every 50 ms
-  Samples   : 10
-  Monitor   : GPIO24 (Pin 18)
-────────────────────────────────────────────────────────
-  Current temp: 22.4 °C
-
-  [ 1/10]  Waiting for threshold to CLEAR first... cleared at 22.4°C
-           Now cross the threshold (above 35.0°C)... crossed at 35.1°C
-           Waiting for PLC output to switch... reacted in 68.4 ms
-```
-
 ---
 
 ## 8. Results
-
-```
-========================================================
-  Results  (10 samples)
-────────────────────────────────────────────────────────
-  Min      :       52.3 ms
-  Max      :      104.8 ms
-  Mean     :       71.2 ms
-  Median   :       68.9 ms
-  Std dev  :       14.1 ms
-  95th pct :       98.7 ms
-========================================================
-
-  Note: latency includes BOTH the polling interval (50 ms)
-  AND the PLC scan cycle (~20 ms).
-  Min achievable with 50 ms polling ≈ 70 ms total.
-```
 
 Copy CSV results to your computer:
 
@@ -202,26 +167,15 @@ scp pi@YOUR_PI_IP:/home/pi/temp_response_results.csv ./
 
 ---
 
-## 9. Understanding the Numbers
 
-| Component | Latency added |
-|---|---|
-| Python polling interval (default 50 ms) | 0–50 ms |
-| PLC scan cycle | 0–20 ms |
-| GPIO signal propagation | ~0 ms |
-| **Total expected range** | **~20–70 ms** |
-
-Results vary more than the button test because temperature changes are gradual — the exact crossing moment depends on how fast the sensor heats up and where in the polling and scan cycles that happens.
-
----
-
-## 10. Optional Arguments
+## 9. Optional Arguments
 
 ```bash
 # Cold water test — react when temp drops below threshold
 sudo python3 ~/temperature_response_test.py --direction below --threshold 20.0
 
 # Faster polling for tighter measurements (min ~25 ms due to sensor conversion time)
+# The MAX31865 takes a maximum of 21 ms to translate the RTD resistance into a digital temperature
 sudo python3 ~/temperature_response_test.py --poll-ms 25
 
 # More samples
@@ -242,18 +196,6 @@ MAX31865 Temperature Response Test
 Measures how fast the PLC can detect a temperature threshold crossing
 and react by switching a GPIO output (LED or relay).
 
-Wiring:
-  MAX31865 → Pi:
-    VIN  → Pin 1  (3.3V)
-    GND  → Pin 6  (GND)
-    SDI  → Pin 19 (MOSI)
-    SDO  → Pin 21 (MISO)
-    CLK  → Pin 23 (SCLK)
-    CS   → Pin 29 (GPIO5)
-
-  PLC output monitor:
-    Pin 18 (GPIO24) → tap on PLC output line (same as button/LED test)
-
 Usage:
   sudo python3 temperature_response_test.py
   sudo python3 temperature_response_test.py --threshold 35.0 --sensor pt1000 --out temp_results.csv
@@ -271,7 +213,7 @@ import digitalio
 import adafruit_max31865
 import RPi.GPIO as GPIO
 
-# ── CLI args ──────────────────────────────────────────────────────────────────
+# CLI Arguments
 parser = argparse.ArgumentParser(description="Measure OpenPLC temperature threshold response time")
 parser.add_argument("--threshold",  type=float, default=35.0,
                     help="Temperature threshold in °C the PLC should react to (default: 35.0)")
@@ -292,7 +234,7 @@ args = parser.parse_args()
 POLL_S   = args.poll_ms / 1000.0
 MONITOR_PIN = 24  # GPIO24 — tapped from PLC output line
 
-# ── Sensor type config ────────────────────────────────────────────────────────
+# Sensor config
 if args.sensor == "pt100":
     RTD_NOMINAL  = 100.0
     REF_RESISTOR = 430.0
@@ -300,7 +242,7 @@ else:
     RTD_NOMINAL  = 1000.0
     REF_RESISTOR = 4300.0
 
-# ── MAX31865 SPI setup ────────────────────────────────────────────────────────
+# MAX31865 Setup
 spi = board.SPI()
 cs  = digitalio.DigitalInOut(board.D5)  # GPIO5, Pin 29
 sensor = adafruit_max31865.MAX31865(
@@ -310,12 +252,12 @@ sensor = adafruit_max31865.MAX31865(
     wires        = 4
 )
 
-# ── GPIO setup for PLC output monitor ────────────────────────────────────────
+# GPIO setup for PLC output monitor
 GPIO.setmode(GPIO.BCM)
 GPIO.setwarnings(False)
 GPIO.setup(MONITOR_PIN, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
 
-# ── Helper: poll monitor pin ──────────────────────────────────────────────────
+# Monitor pin helper
 def wait_for_plc_output(target_state, timeout_s):
     """Poll GPIO24 until PLC output matches target_state."""
     deadline = time.perf_counter() + timeout_s
@@ -325,7 +267,7 @@ def wait_for_plc_output(target_state, timeout_s):
         if time.perf_counter() > deadline:
             return False, None
 
-# ── Helper: threshold check ───────────────────────────────────────────────────
+# Threshold helper
 def threshold_crossed(temp):
     if args.direction == "above":
         return temp >= args.threshold
@@ -339,7 +281,7 @@ def threshold_cleared(temp):
     else:
         return temp > args.threshold + 2.0
 
-# ── Print header ──────────────────────────────────────────────────────────────
+# Print header
 print(f"\n{'='*56}")
 print(f"  MAX31865 Temperature Response Test")
 print(f"  {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
@@ -374,7 +316,7 @@ print(f"\n  Press Ctrl+C to stop early.\n")
 results = []
 temp_log = []   # full temperature trace for CSV
 
-# ── Main loop ─────────────────────────────────────────────────────────────────
+# Main loop
 try:
     for i in range(args.samples):
         print(f"  [{i+1:>2}/{args.samples}]  Waiting for threshold to CLEAR first...", end="", flush=True)
@@ -442,7 +384,7 @@ except KeyboardInterrupt:
 finally:
     GPIO.cleanup()
 
-# ── Summary ───────────────────────────────────────────────────────────────────
+# Summary
 if not results:
     print("\n  No results collected.")
     sys.exit(0)
@@ -471,7 +413,7 @@ print("  Note: latency here includes BOTH the temperature polling interval")
 print(f"  ({args.poll_ms:.0f} ms) AND the PLC scan cycle (~20 ms).")
 print(f"  Min achievable with {args.poll_ms:.0f} ms polling ≈ {args.poll_ms + 20:.0f} ms total.\n")
 
-# ── CSV ───────────────────────────────────────────────────────────────────────
+# Data to CSV
 with open(args.out, "w", newline="") as f:
     writer = csv.writer(f)
     writer.writerow(["sample", "crossing_temp_c", "latency_ms"])
