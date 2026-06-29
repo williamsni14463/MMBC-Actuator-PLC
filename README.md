@@ -55,7 +55,7 @@ Measures end-to-end latency from a PT100 temperature sensor crossing a threshold
 
 ## Known Issues
 
-The big stuff is documented in the experiment logs, but the highlights are collected in [issues/KNOWN_ISSUES.md](issues/KNOWN_ISSUES.md).
+All issues/bugs are collected in [issues/KNOWN_ISSUES.md](issues/KNOWN_ISSUES.md).
 
 ---
 
