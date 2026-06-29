@@ -17,21 +17,22 @@ MMBC-Actuator-PLC/
 │   └── 3-example-raspberry-pi-plc.md
 │
 ├── experiments/                  # My R&D logs for each experiment
-│   ├── RND_pt100_openplc_progress_log.md
+│   ├── pt100_openplc_progress_log.md
 │   └── openplc-response-time-test.md
 │
 ├── scripts/                      # Python scripts used in experiments
-│   └── plc_response_test.py
-│
+│   ├── plc_response_test.py
+|   ├──openplc_reaction_time_test.py
+│   └── pt100_test.py
 ├── issues/                       # Known issues & fixes in one place
 │   └── KNOWN_ISSUES.md
 │
-└── README.md                     # You're here
+└── README.md                     
 ```
 
 ---
 
-## 🚀 Where to start
+## Where to start
 
 If you're new to this setup, work through the **setup/** folder in order:
 
@@ -39,25 +40,22 @@ If you're new to this setup, work through the **setup/** folder in order:
 2. [OpenPLC Runtime Setup](setup/2-openplc-runtime-setup.md) — install and start the OpenPLC runtime on the Pi
 3. [Example PLC Program](setup/3-example-raspberry-pi-plc.md) — build and run a simple button → LED program as a sanity check
 
-Once setup is done, the **experiments/** folder has the actual R&D work I've been doing.
+Once setup is done, the **experiments/** folder has some R&D work I've been doing.
 
 ---
 
-## 🔬 Experiments
+## Experiments
 
 ### [Response Time Test — Button → LED](experiments/openplc-response-time-test.md)
-Measures how fast the PLC reacts to a button press and turns on an LED. Uses a Python script to physically monitor the LED output line and time 50 presses. Found that the scan cycle time (originally 20ms) was the bottleneck — reduced to under 1ms. Results: ~15–23ms range with a mean around 18ms.
+Measures how fast the PLC reacts to a button press and turns on an LED. Uses a Python script to physically monitor the LED output line and time 50 presses. Found that the scan cycle time (originally 20ms) was the bottleneck — reduced to under 1ms.
 
 ### [PT100 + Modbus Latency Test](experiments/RND_pt100_openplc_progress_log.md)
-This is the bigger one. Measures end-to-end latency from a PT100 temperature sensor crossing a threshold → OpenPLC detecting it via Modbus → Python confirming the output bit changed. Ran into a nasty GPIO/SPI conflict bug (Issue #1 in the log). Full system working as of June 2026.
-
+Measures end-to-end latency from a PT100 temperature sensor crossing a threshold → OpenPLC detecting it via Modbus → Python confirming the output bit changed. R
 ---
 
-## ⚠️ Known Issues
+## Known Issues
 
-I ran into some real headaches. The big stuff is documented in the experiment logs, but the highlights are collected in [issues/KNOWN_ISSUES.md](issues/KNOWN_ISSUES.md).
-
-The biggest one: **if you're using SPI devices (like the MAX31865) on the Pi, do NOT set the OpenPLC hardware layer to "Raspberry Pi"** — it will hijack your SPI pins the second you start the PLC. Set it to "Blank for Linux" instead.
+The big stuff is documented in the experiment logs, but the highlights are collected in [issues/KNOWN_ISSUES.md](issues/KNOWN_ISSUES.md).
 
 ---
 
@@ -68,9 +66,9 @@ The biggest one: **if you're using SPI devices (like the MAX31865) on the Pi, do
 - Breadboard, jumper wires, 220Ω & 10kΩ resistors, pushbutton, LED
 
 ## Software
-- Raspberry Pi OS (Bookworm 64-bit)
+- Raspberry Pi OS Bookworm 64-bit
 - OpenPLC Runtime v3
-- OpenPLC Editor (on computer, not Pi)
+- OpenPLC Editor 
 - Python 3 (`adafruit-blinka`, `adafruit-circuitpython-max31865`, `pymodbus`, `RPi.GPIO`)
 
 ---
