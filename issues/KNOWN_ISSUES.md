@@ -83,3 +83,13 @@ Your Project Folder → build → OpenPLC Runtime v3 → src → program_name.st
 ```
 
 Additionally, never save your OpenPLC Editor project in OneDrive — it causes path issues during the upload step.
+
+---
+
+**Issue #6 - SSH blocked at Fermilab**
+
+**Symptom:** This is so far unresolved, but the Service Desk will eventually block the MAC address to the Pi.
+
+**Root Cause:** The standard method of authorization for SSH is password or pubkey authentication. Both of these methods are deemed insecure by Fermilab security.
+
+**Fix:** The fix should be to use Kerberos Authentication, but I've had a lot of trouble getting it set up and working with security is taking a very long time.
