@@ -1,7 +1,4 @@
 # Experiment: PT100 OpenPLC Reaction Time
-
-> Living document. Append new dated entries to the **Changelog** at the bottom as the project continues. Sections 1–8 describe the system as currently built and working.
-
 ---
 
 ## 1. Project Goal
