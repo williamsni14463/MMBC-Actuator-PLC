@@ -14,8 +14,7 @@ temperature change sensed by a PT100 RTD, by:
 3. Letting an OpenPLC ST program compare it to a threshold and flip a coil.
 4. Timing, in Python, the round trip from "threshold crossed" to "coil confirmed ON."
 
-This is **not** a test of the PT100's thermal response time — it's a test of
-**Modbus write + PLC scan cycle + Modbus read** latency.
+This does **not** test the PT100's thermal response time; this measures how long it takes for the PLC to send an output, in this case changing a coil to true, after a temperature threshold is surpassed.
 
 ---
 
@@ -23,8 +22,8 @@ This is **not** a test of the PT100's thermal response time — it's a test of
 
 ### 2.1 Parts
 - Raspberry Pi 4
-- Adafruit MAX31865 RTD-to-digital amplifier breakout
-- PT100 RTD (2-wire)
+- Adafruit MAX31865 RTD-to-digital amplifier
+- PT100 RTD 
 
 ### 2.2 Wiring (Pi 40-pin header → MAX31865)
 
@@ -36,6 +35,8 @@ This is **not** a test of the PT100's thermal response time — it's a test of
 | MISO / GPIO9 | SDO |
 | SCLK / GPIO11 | CLK |
 | GPIO5 | CS |
+
+The slots RDY and 3V3 should be left empty.
 
 PT100 wired 4-wire into the MAX31865 screw terminals.
 
@@ -63,11 +64,32 @@ pip3 install --break-system-packages adafruit-circuitpython-max31865
 pip3 install --break-system-packages pymodbus
 ```
 
-> **Note on pymodbus:** the keyword argument for selecting a Modbus slave/unit
-> ID has changed across pymodbus versions (`unit=` → `slave=` → `device_id=`
-> depending on release). If a script throws a `TypeError` on `write_register`
-> or `read_coils`, check `pip3 show pymodbus` and adjust the keyword to match.
-> The current working script (Section 7) uses `device_id=`, which I believe is for pymodbus version 3.13
+If this doesn't work, create an environment:
+
+```bash
+python3 -m venv temp-env
+source temp-env/bin/activate
+```
+
+Then install the dependancies inside of this environment:
+
+```bash
+pip install --upgrade pip
+pip install adafruit-blinka
+pip install adafruit-circuitpython-max31865
+```
+
+Keep in mind if you go this route (I did), you **NEED** to open this environment whenever you run your python code because the dependancies are installed inside of it.
+
+Always open the environment with
+```bash
+source temp-env/bin/activate
+```
+
+Then you can run your code:
+```bash
+python3 your_script.py
+```
 
 ### 3.3 OpenPLC
 - OpenPLC Editor (used to write/compile the ST program)
@@ -202,31 +224,37 @@ Implication: Python **cannot** write a sensor value into `%IW`/`%IX` over Modbus
 ### 6.1 Structured Text code
 
 ```iecst
-PROGRAM PLC_PRG
-VAR
-    Threshold : INT := 3000;  (* 30.00 C, scaled x100 -- must match Python's SCALE *)
-END_VAR
+  VAR
+    Threshold : INT := 3000;
+    TemperatureScaled : INT AT %QW0;
+    OutputBit : BOOL AT %QX0.0;
+  END_VAR
 
-IF %QW0 > Threshold THEN
-    %QX0.0 := TRUE;
+IF TemperatureScaled >= Threshold THEN
+    OutputBit := TRUE;
 ELSE
-    %QX0.0 := FALSE;
+    OutputBit := FALSE;
 END_IF;
-
-END_PROGRAM
 ```
 
 `Threshold` is an integer because the temperature is sent scaled ×100 (so 30.00°C → 3000) to preserve two decimal places over a 16-bit integer register.
 
 ### 6.2 Deployment steps
 1. OpenPLC Editor → New Project → blank project.
-2. Set the main POU's language to Structured Text, paste the code above.
-3. Change the cycle time to 1ms
-4. Build the project (generates a `.st` file).
-5. OpenPLC Runtime web UI → **Settings → Modbus Server → Enable** (port 502).
-6. **Settings → Hardware** → set correctly (see Section 8 — this step is where the project's main bug originated).
-7. **Programs → Upload new program** → select the `.st` file → name it → **Upload Program** → **Compile**.
-8. Dashboard → **Start PLC**.
+2. Change the cycle time to 1ms
+3. Set the main POU's language to Structured Text, paste the code section from VAR through END_VAR in the variable header by selecting this button:
+   <img width="987" height="298" alt="image" src="https://github.com/user-attachments/assets/a595b9b8-110d-4815-8433-07f597061638" />
+4. Paste the body of the code, IF through END_IF, in the main section
+5. Select Configuration in the top left"
+   <img width="236" height="287" alt="image" src="https://github.com/user-attachments/assets/8d07eef9-8d69-4b12-9d6d-41f8eb22d65c" />
+6. Select Device as OpenPLC Runtime v3 and enter the IP Address of the PI found from 'hostname -I'
+7. Connect to the runtime
+8. In the runtime, **Settings → Hardware** → set correctly to Blank for Linux (see Section 8 — this step is where the project's main bug originated).
+9. Build the project with clean build and upload in the Editor (generates a `.st` file and automatically uploads it to the runtime
+   <img width="222" height="113" alt="image" src="https://github.com/user-attachments/assets/efffc3ab-6e53-4f46-8263-f4e34d84e4c5" />
+10. OpenPLC Runtime web UI → **Settings → Modbus Server → Enable** (port 502).
+11. Dashboard → **Start PLC** if not already started
+12. Go to **Monitoring** to monitor the value of OutputBit as the python program runs
 
 ---
 
