@@ -62,8 +62,8 @@ pip3 install --break-system-packages pymodbus
 If that doesn't work, create a virtual environment:
 
 ```
-python3 -m venv temp-env
-source temp-env/bin/activate
+python3 -m venv my-env
+source my-env/bin/activate
 ```
 
 Then install inside it:
@@ -77,7 +77,7 @@ pip install adafruit-circuitpython-max31865
 **Important:** If you go the venv route (I did), you need to re-activate the environment every time you open a new terminal session before running any scripts:
 
 ```
-source temp-env/bin/activate
+source my-env/bin/activate
 python3 your_script.py
 ```
 
@@ -88,7 +88,7 @@ python3 your_script.py
 
 ---
 
-## 4. Phase 1 — PT100 Sanity Check
+## 4. Phase 1 — PT100 Check
 
 Before involving OpenPLC at all, confirm the sensor and wiring work on their own.
 
@@ -123,7 +123,7 @@ OpenPLC's Modbus TCP server maps PLC memory to standard Modbus tables:
 | `%QW`           | Holding Registers | Read/Write |
 | `%MW`           | Holding Registers (higher range) | Read/Write (in theory) |
 
-Key implication: Python **cannot** write a sensor value into `%IW`/`%IX` over Modbus — those tables are read-only by protocol design. `%MW` looked like the right place semantically, but there are real-world reports of it not updating reliably inside the ST program on some OpenPLC Runtime builds.
+Python **cannot** write a sensor value into `%IW`/`%IX` over Modbus. Those tables are read-only by protocol design. `%MW` looked like the right place semantically, but there are real-world reports of it not updating reliably inside the ST program on some OpenPLC Runtime builds.
 
 **Decision:** Use `%QW0` for the incoming temperature value, and `%QX0.0` (a coil) for the PLC's response. Nothing else in the program writes to `%QW0`, so there's no conflict despite the "output" naming.
 
@@ -183,7 +183,7 @@ END_IF;
 ### 7.2 Walkthrough
 
 **Configuration:**
-- `PLC_IP = "127.0.0.1"` assumes OpenPLC Runtime is running on the same Pi as this script. I ended up using the actual Pi IP instead — get it with `hostname -I`.
+- `PLC_IP = "127.0.0.1"` assumes OpenPLC Runtime is running on the same Pi as this script. I ended up using the actual Pi IP instead, get it with `hostname -I`.
 - `THRESHOLD_C` / `SCALE` must match the `Threshold` constant in the ST program exactly (30.00°C × 100 = 3000).
 - `HYSTERESIS` — how far below the threshold temperature needs to drop before the script re-arms. Prevents one shaky reading right at the boundary from generating a bunch of false triggers. Waiting about 10 seconds after triggering usually lets the sensor cool enough to re-arm.
 
@@ -231,8 +231,6 @@ Every pin changes function the moment "Start PLC" is pressed.
    > Make sure you pick the *Linux* variant specifically. The generic "Blank" option tries to compile for Windows and will break things differently.
 
 3. Restart the runtime.
-
-**Status:** ✅ Fixed — sensor no longer breaks on PLC start.
 
 ---
 
