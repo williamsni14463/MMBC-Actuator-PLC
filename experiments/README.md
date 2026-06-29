@@ -9,4 +9,4 @@ These are my R&D logs — the actual research work I've been doing. Each file is
 
 ---
 
-> The experiment logs are written in first-person — I wanted to capture what I was actually thinking and what I actually ran into, not just a clean write-up of the final result.
+
