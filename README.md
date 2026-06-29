@@ -1,8 +1,8 @@
 # MMBC Actuator PLC — Raspberry Pi + OpenPLC Research Repo
 
-This is my working documentation for an ongoing research project at Fermilab (MMBC) where I'm turning a Raspberry Pi into a software PLC using OpenPLC, then using it to test actuator response times and sensor integration.
+This is my working documentation for an ongoing research project where I'm turning a Raspberry Pi into a software PLC using OpenPLC, then using it to test actuator response times and sensor integration.
 
-I'm keeping this repo as a living document — setup guides, experiment logs, issues I ran into, and results all live here. It's meant to be readable for someone starting from scratch with this hardware/software stack, not just for me to look back at.
+This repo is a living document with setup guides, experiment logs, issues I ran into, and results. It's meant to be readable for someone starting from scratch with this hardware/software stack.
 
 ---
 
