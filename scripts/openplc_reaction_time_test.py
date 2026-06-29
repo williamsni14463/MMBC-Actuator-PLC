@@ -107,7 +107,7 @@ try:
         elif (not armed) and temp < (THRESHOLD_C - HYSTERESIS):
             print("Re-armed.\n")
             armed = True
-
+        # Need to experiment to see how low I can get looping
         time.sleep(0.001)  # 1ms loop delay
 
 except KeyboardInterrupt:
