@@ -6,7 +6,7 @@ This repo is a living document with setup guides, experiment logs, issues I ran 
 
 ---
 
-## 📁 What's in here
+## What's in here
 
 ```
 MMBC-Actuator-PLC/
