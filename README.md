@@ -46,7 +46,7 @@ Once setup is done, the **experiments/** folder has some R&D work I've been doin
 
 ## Experiments
 
-### [Response Time Test — Button → LED](experiments/openplc-response-time-test.md)
+### [Response Time Test — Button → LED](experiments/button_openplc-response-time-test.md)
 Measures how fast the PLC reacts to a button press and turns on an LED. Uses a Python script to physically monitor the LED output line and time 50 presses. Found that the scan cycle time (originally 20ms) was the bottleneck — reduced to under 1ms.
 
 ### [PT100 + Modbus Latency Test](experiments/pt100_openplc_progress_log.md)
