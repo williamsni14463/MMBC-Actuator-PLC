@@ -289,7 +289,7 @@ from pymodbus.client import ModbusTcpClient
 # PT100 Configuration
 
 CS_PIN = board.D5          # GPIO5
-WIRES = 2                  # Change to 3 if using a 3-wire RTD
+WIRES = 4                  
 RTD_NOMINAL = 100.0
 REF_RESISTOR = 430.0
 
