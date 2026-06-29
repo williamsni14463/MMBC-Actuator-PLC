@@ -39,6 +39,7 @@ This does **not** test the PT100's thermal response time — it measures how lon
 The RDY and 3V3 slots on the MAX31865 should be left empty.
 
 PT100 wired 4-wire into the MAX31865 screw terminals.
+
 <img width="518" height="418" alt="image" src="https://github.com/user-attachments/assets/c6ffbddc-1938-4a5e-8517-3d9c08527f90" />
 
 ---
