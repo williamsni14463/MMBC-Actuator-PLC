@@ -84,8 +84,18 @@ The script will prompt you to press the button one at a time:
 - If a press times out, the script skips it and asks you to try again
 
 ---
+## 5. Issue Log
 
-## 5. Results
+**Problem:**
+Initial measurements of the button press response time in the PLC system showed inconsistent and unusually low-latency readings clustered between 0–20 ms, with high variance and no meaningful resolution between events. This made it impossible to accurately characterize the true system response time.
+
+**Root Cause:**
+The issue was traced to the OpenPLC scan/cycle time configuration, which was set to approximately 20 ms per cycle. Because the PLC logic only updates once per scan cycle, all input → output timing measurements were effectively quantized to the cycle interval, causing artificial clustering and uncertainty in the recorded response times.
+
+**Fix:**
+The PLC cycle time can be adjusted. However, the cycle timing resolution cannot exceed the scan period. More testing needs to be done to find the absolute minimum cycling time without breaking the program. So far, I have contained it under 1ms, but I am hopeful I can find ways for the system to run faster.
+
+## 6. Results
 
 After the button has been pressed all 50 times, a summary will be printed out.
 
