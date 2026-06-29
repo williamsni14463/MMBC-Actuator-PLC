@@ -86,7 +86,7 @@ Additionally, never save your OpenPLC Editor project in OneDrive — it causes p
 
 ---
 
-**Issue #6 - SSH blocked at Fermilab**
+## Issue #6 — SSH is blocked on the Fermilab network
 
 **Symptom:** This is so far unresolved, but the Service Desk will eventually block the MAC address to the Pi.
 
