@@ -37,7 +37,10 @@ This is **not** a test of the PT100's thermal response time — it's a test of
 | SCLK / GPIO11 | CLK |
 | GPIO5 | CS |
 
-PT100 wired 2-wire into the RTD screw terminals (jumpered per the board's 2-wire instructions).
+PT100 wired 4-wire into the MAX31865 screw terminals.
+
+<img width="520" height="426" alt="image" src="https://github.com/user-attachments/assets/f0d605ca-b9ef-4eb7-afd5-5f36c8915357" />
+
 
 ---
 
@@ -45,8 +48,8 @@ PT100 wired 2-wire into the RTD screw terminals (jumpered per the board's 2-wire
 
 ### 3.1 OS-level setup
 ```bash
-sudo raspi-config        # Interface Options -> SPI -> Enable -> reboot
-ls /dev/spidev*          # confirms /dev/spidev0.0 and /dev/spidev0.1 exist
+sudo raspi-config        # Interface Options -> SPI -> Enable -> reboot pi
+ls /dev/spidev*          # confirm that /dev/spidev0.0 and /dev/spidev0.1 exist
 ```
 
 ### 3.2 Python packages
