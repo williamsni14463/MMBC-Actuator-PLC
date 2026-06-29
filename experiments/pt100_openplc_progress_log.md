@@ -1,5 +1,4 @@
 # Experiment: PT100 OpenPLC Reaction Time
----
 
 ## 1. Project Goal
 
