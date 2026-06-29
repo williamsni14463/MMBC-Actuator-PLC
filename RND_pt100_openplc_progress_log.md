@@ -75,7 +75,7 @@ pip3 install --break-system-packages pymodbus
 
 ---
 
-## 4. Phase 1 — PT100 Sanity Check
+## 4. Phase 1 — PT100 Check
 
 Before involving OpenPLC at all, confirm the sensor and wiring work on their own.
 
@@ -86,10 +86,10 @@ Before involving OpenPLC at all, confirm the sensor and wiring work on their own
 """
 pt100_test.py
 
-Simple sanity-check script for a PT100 RTD wired through an
-Adafruit MAX31865 amplifier breakout to a Raspberry Pi 4 (SPI).
+Simple script for a PT100 RTD wired through an
+Adafruit MAX31865 amplifier breakout to a Raspberry Pi 4.
 
-It loops forever, printing the raw RTD resistance (Ohms) and the
+It loops forever, printing the raw resistance in Ohms and the
 converted temperature (C) every couple of seconds, and also reports
 any sensor fault flags so wiring problems are obvious.
 
@@ -97,24 +97,19 @@ Stop with Ctrl+C.
 """
 
 import time
-
 import board
 import digitalio
 import adafruit_max31865
 
-# ----------------------------------------------------------------------
 # CONFIGURATION - change these to match your hardware
-# ----------------------------------------------------------------------
 
 CS_PIN = board.D5          # GPIO pin wired to the sensor's CS pad
-WIRES = 2                  # 2, 3, or 4 -- must match your RTD wiring
+WIRES = 4                  # 2, 3, or 4 -- must match your RTD wiring
 RTD_NOMINAL = 100.0        # 100.0 for PT100, 1000.0 for PT1000
 REF_RESISTOR = 430.0       # 430.0 for the PT100 board, 4300.0 for PT1000
 READ_INTERVAL = 2.0        # seconds between readings
 
-# ----------------------------------------------------------------------
 # SETUP
-# ----------------------------------------------------------------------
 
 spi = board.SPI()
 cs = digitalio.DigitalInOut(CS_PIN)
@@ -138,9 +133,7 @@ FAULT_NAMES = (
 
 print("PT100 / MAX31865 test starting. Press Ctrl+C to stop.\n")
 
-# ----------------------------------------------------------------------
 # MAIN LOOP
-# ----------------------------------------------------------------------
 
 try:
     while True:
@@ -172,10 +165,9 @@ except KeyboardInterrupt:
 - Reads `sensor.fault`, a 6-tuple of booleans corresponding to the MAX31865's fault register, and prints which (if any) are set, so a wiring problem shows up as a named fault instead of a confusing number.
 
 ### 4.3 How results were interpreted
-- PT100s read ~100 Ω at 0°C, climbing ~0.385 Ω/°C — so ~108–110 Ω at room temperature is the expected healthy baseline.
-- Resistance near 0 Ω / temperature near -242°C = the conversion math's output for a near-zero raw ADC code — i.e., the chip isn't getting a real reading. (This exact symptom reappears in Section 8's bug.)
-
-**Result: confirmed working** — resistance and temperature tracked hand/breath warming as expected.
+- PT100s read ~100 Ω at 0°C, climbing ~0.385 Ω/°C — so ~108–110 Ω at room temperature is the expected baseline
+- An issue I constantly ran into was the temperature reading -242.02°C, and near 0 resistance. If this is happening, one possible issue is the wiring, make sure no pins are soldered together and no connections are shorting.
+- If the room temperature reading is around ~23°C, then you should be in a good place. Put your finger on the sensor and see if the temperature begins to rise.
 
 ---
 
