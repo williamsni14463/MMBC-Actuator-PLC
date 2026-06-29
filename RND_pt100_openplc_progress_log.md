@@ -67,7 +67,7 @@ pip3 install --break-system-packages pymodbus
 > ID has changed across pymodbus versions (`unit=` → `slave=` → `device_id=`
 > depending on release). If a script throws a `TypeError` on `write_register`
 > or `read_coils`, check `pip3 show pymodbus` and adjust the keyword to match.
-> The current working script (Section 7) uses `device_id=`.
+> The current working script (Section 7) uses `device_id=`, which I believe is for pymodbus version 3.13
 
 ### 3.3 OpenPLC
 - OpenPLC Editor (used to write/compile the ST program)
@@ -161,7 +161,7 @@ except KeyboardInterrupt:
 
 ### 4.2 What it does
 - Opens the Pi's hardware SPI bus and a `digitalio` pin for CS.
-- Every `READ_INTERVAL` seconds, reads `sensor.resistance` (raw RTD ohms) and `sensor.temperature` (converted via the Callendar–Van Dusen equation).
+- Every `READ_INTERVAL` seconds, reads `sensor.resistance` (raw RTD ohms) and `sensor.temperature` 
 - Reads `sensor.fault`, a 6-tuple of booleans corresponding to the MAX31865's fault register, and prints which (if any) are set, so a wiring problem shows up as a named fault instead of a confusing number.
 
 ### 4.3 How results were interpreted
@@ -171,11 +171,11 @@ except KeyboardInterrupt:
 
 ---
 
-## 5. Phase 2 — OpenPLC Integration Design
+## 5. Phase 2 — OpenPLC Integration
 
 ### 5.1 Modbus addressing decision
 
-OpenPLC's Modbus TCP server maps PLC memory to standard Modbus tables:
+OpenPLC's Modbus TCP server maps PLC memory to standard Modbus tables
 
 | OpenPLC location | Modbus table | Read/Write over Modbus |
 |---|---|---|
@@ -186,7 +186,7 @@ OpenPLC's Modbus TCP server maps PLC memory to standard Modbus tables:
 
 Implication: Python **cannot** write a sensor value into `%IW`/`%IX` over Modbus — those tables are read-only by protocol design, not just by convention. `%MW` looked like the semantically "correct" place for incoming sensor data, but there are real-world reports of `%MW` not updating reliably inside the ST/LD program on some OpenPLC Runtime builds, even though it writes fine over Modbus.
 
-**Decision:** use `%QW0` (a holding register) for the incoming temperature value, and `%QX0.0` (a coil) for the PLC's response. Nothing else in the program writes to `%QW0`, so there's no conflict despite the conventional "output" naming.
+**Decision:** use `%QW0` for the incoming temperature value, and `%QX0.0` (a coil) for the PLC's response. Nothing else in the program writes to `%QW0`, so there's no conflict despite the conventional "output" naming.
 
 ### 5.2 Final Modbus map for this project
 
@@ -221,17 +221,18 @@ END_PROGRAM
 ### 6.2 Deployment steps
 1. OpenPLC Editor → New Project → blank project.
 2. Set the main POU's language to Structured Text, paste the code above.
-3. Build the project (generates a `.st` file).
-4. OpenPLC Runtime web UI → **Settings → Modbus Server → Enable** (port 502).
-5. **Settings → Hardware** → set correctly (see Section 8 — this step is where the project's main bug originated).
-6. **Programs → Upload new program** → select the `.st` file → name it → **Upload Program** → **Compile**.
-7. Dashboard → **Start PLC**.
+3. Change the cycle time to 1ms
+4. Build the project (generates a `.st` file).
+5. OpenPLC Runtime web UI → **Settings → Modbus Server → Enable** (port 502).
+6. **Settings → Hardware** → set correctly (see Section 8 — this step is where the project's main bug originated).
+7. **Programs → Upload new program** → select the `.st` file → name it → **Upload Program** → **Compile**.
+8. Dashboard → **Start PLC**.
 
 ---
 
 ## 7. Phase 3 — Latency Test Script
 
-### 7.1 Code: `openplc_reaction_time_test.py` (current working version)
+### 7.1 Code: `openplc_reaction_time_test.py`
 
 ```python
 #!/usr/bin/env python3
@@ -256,31 +257,31 @@ import board
 import digitalio
 import adafruit_max31865
 from pymodbus.client import ModbusTcpClient
-# ---------------------------------------------------------------------
+
 # PT100 Configuration
-# ---------------------------------------------------------------------
+
 CS_PIN = board.D5          # GPIO5
 WIRES = 2                  # Change to 3 if using a 3-wire RTD
 RTD_NOMINAL = 100.0
 REF_RESISTOR = 430.0
-# ---------------------------------------------------------------------
+
 # OpenPLC Configuration
-# ---------------------------------------------------------------------
+
 PLC_IP = "127.0.0.1"
 PLC_PORT = 502
 DEVICE_ID = 1
 TEMP_REGISTER = 0          # %QW0
 OUTPUT_COIL = 0            # %QX0.0
-# ---------------------------------------------------------------------
+
 # Test Parameters
-# ---------------------------------------------------------------------
+
 THRESHOLD_C = 30.0
 SCALE = 100
 THRESHOLD_INT = int(THRESHOLD_C * SCALE)
 HYSTERESIS = 1.0
-# ---------------------------------------------------------------------
+
 # Initialize PT100
-# ---------------------------------------------------------------------
+
 spi = board.SPI()
 cs = digitalio.DigitalInOut(CS_PIN)
 sensor = adafruit_max31865.MAX31865(
@@ -290,9 +291,9 @@ sensor = adafruit_max31865.MAX31865(
     rtd_nominal=RTD_NOMINAL,
     ref_resistor=REF_RESISTOR,
 )
-# ---------------------------------------------------------------------
+
 # Connect to OpenPLC
-# ---------------------------------------------------------------------
+
 client = ModbusTcpClient(PLC_IP, port=PLC_PORT)
 if not client.connect():
     raise RuntimeError("Could not connect to OpenPLC.")
@@ -357,14 +358,16 @@ finally:
 
 ### 7.2 Walkthrough
 
-**Setup (top of file):**
+**Setup:**
 - `CS_PIN`, `WIRES`, `RTD_NOMINAL`, `REF_RESISTOR` — same MAX31865 config as Phase 1.
 - `PLC_IP = "127.0.0.1"` — assumes OpenPLC Runtime is running on the same Pi as this script. Change to the Runtime's actual IP if it's on a different machine.
+        • I ended up just using the actual Pi IP. Find this with 'hostname -I' in the pi terminal
 - `TEMP_REGISTER` / `OUTPUT_COIL` are both address `0`, corresponding to `%QW0` and `%QX0.0` per the map in Section 5.2.
 - `THRESHOLD_C` / `SCALE` must match the `Threshold` constant in the ST program exactly (30.00°C × 100 = 3000).
 - `HYSTERESIS` — how far temperature must drop below the threshold before the script "re-arms" and is willing to time another crossing. Prevents one shaky reading right at the threshold from generating dozens of spurious latency readings.
+      • I was only able to test it a few times, but usually waiting 10 seconds or so rearms the sensor. Just had to make sure it is cooling between attempts
 
-**Main loop, each iteration:**
+**Main loop:**
 1. Read `sensor.temperature`, scale and clamp it to a valid unsigned 16-bit value (`0–65535`) for the Modbus register.
 2. **Write-on-change**: only sends a Modbus write if the scaled value actually changed since last loop, cutting down on redundant Modbus traffic when the temperature is stable.
 3. Prints a single self-overwriting status line (`\r` + `end=""`) showing live temperature and resistance, so the terminal doesn't scroll on every iteration.
@@ -376,7 +379,7 @@ finally:
 5. **Re-arm:** once temperature drops back below `THRESHOLD_C - HYSTERESIS`, `armed` is set back to `True`, allowing another timed crossing on the next heat-up.
 6. `time.sleep(0.001)` — a 1 ms loop delay, much tighter than earlier drafts, since SPI reads are fast and writes are now skipped when unchanged.
 
-**Known limitation (intentional, not a bug):** unlike an earlier draft, this version has no timeout on the inner `read_coils` polling loop — if the PLC program is stopped or never reacts, the script will hang there indefinitely rather than reporting a failure. Worth keeping in mind during testing.
+**Known limitation (intentional, not a bug):** unlike an earlier draft, this version has no timeout on the inner `read_coils` polling loop — if the PLC program is stopped or never reacts, the script will hang there indefinitely rather than reporting a failure. Worth keeping in mind during testing, make sure the sensor is actually working. When I tested the program, I opened another terminal and ran the pt100_test.py from above at the same time, just to make sure it wasn't failing in the background.
 
 ---
 
@@ -385,11 +388,11 @@ finally:
 ### Issue #1 — Sensor reads 0 Ω / -242°C immediately after starting the OpenPLC Runtime program
 
 **Symptom:**
-PT100 readings are correct (Section 4.3) right up until the OpenPLC program is started ("Start PLC"). Immediately afterward, the sensor reports 0 Ω resistance and ~-242°C. Stopping the PLC program does **not** fix it. Only unplugging/repowering the Pi restores correct readings — until the PLC is started again.
+I could see that the PT100 readings are correct (Section 4.3) right up until the OpenPLC program is started ("Start PLC"). Immediately afterward, the sensor reports 0 Ω resistance and ~-242°C. Stopping the PLC program does **not** fix it. Only unplugging/repowering the Pi restores correct readings, until the PLC is started again which then it breaks again.
 
-**Diagnostic steps:**
-1. Hypothesis: OpenPLC's GPIO handling for the Pi is conflicting with the SPI bus the MAX31865 needs.
-2. Checked pin states with `pinctrl` (replacement for the deprecated `raspi-gpio` on current Pi OS) for GPIO 5, 7, 8, 9, 10, 11 — once with the PLC stopped, once right after starting it:
+**Diagnostic**
+1. Hypothesis: I think that OpenPLC's GPIO handling for the Pi conflicts with the SPI bus the MAX31865 needs.
+2. I checked the pin states with `pinctrl`  for GPIO 5, 7, 8, 9, 10, 11 — once with the PLC stopped, once right after starting it:
 
 | Pin | Role | State *before* Start PLC | State *after* Start PLC |
 |---|---|---|---|
@@ -403,21 +406,16 @@ PT100 readings are correct (Section 4.3) right up until the OpenPLC program is s
 The moment "Start PLC" is pressed, every one of these pins changes function. GPIO5 (the sensor's own CS pin) and the entire SPI0 bus (7, 8, 9, 10, 11) get reassigned away from SPI/Blinka control.
 
 **Root cause:**
-OpenPLC Runtime's "Raspberry Pi" hardware layer initializes a hardcoded set of GPIO pins as plain digital inputs/outputs as soon as the PLC starts — independent of anything actually written in the ST/LD program. That hardcoded pin set includes GPIO 5, 9, 10, 11 (claimed as inputs) and 7, 8 (claimed as outputs) — i.e., exactly the MAX31865's CS line plus the whole SPI0 bus. Once reclaimed as plain GPIO, the pins can no longer carry SPI signals, so the MAX31865 chip returns garbage (effectively a zero raw ADC code), which converts to 0 Ω / ~-242°C.
+Setting the runtime's hardware layer as Raspberry Pi forces a hardcoded set of GPIO pins as plain digital inputs or outputs as soon as the PLC starts up, which ios independant of anything written in the actual ST program. These hardcoded pins included GPIO 5,9,10,11, which were claimed as inputs, and GPIO 7,8, claimed as outputs. This explains why only a power cycle fixes everything, the GPIO function registers are rebooted when the pi reloads the SPI device tree.
 
-This also explains why only a power cycle (not just stopping the program) fixes it: the GPIO function-select registers are written directly by the hardware layer and aren't automatically reverted when the process exits — only a reboot reloads the SPI device-tree overlay and restores the pins.
-
-**Fix applied:**
-This project's design never needs OpenPLC to touch real Pi GPIO — all data exchange happens through Modbus registers (`%QW0`, `%QX0.0`), which are pure software values regardless of hardware layer. So:
+**How I fixed it:**
+This project's design never needs OpenPLC to touch real Pi GPIO — all data exchange happens through Modbus registers (`%QW0`, `%QX0.0`), which are pure software values regardless of the hardware layer. So:
 
 1. OpenPLC Web UI → **Settings → Hardware**.
-2. Change the hardware layer from **Raspberry Pi** to **Blank for Linux** — specifically the Linux-flavored blank option, not just the generic "Blank" entry (the two are similarly named but behave differently; "Blank for Linux" was the one that actually stopped the GPIO claiming).
+2. Change the hardware layer from **Raspberry Pi** to **Blank for Linux** — specifically the Linux-flavored blank option, not just the generic "Blank" entry which tries to compile the program for Windows.
 3. Restart the runtime.
 
-(If a given OpenPLC version doesn't expose this option, the fallback is editing `raspberrypi.cpp`'s `inBufferPinMask` / `outBufferPinMask` arrays to exclude GPIO 5, 7, 8, 9, 10, 11, then rebuilding the runtime from source.)
-
 **Status:** Fix applied. ✅ Sensor no longer breaks on PLC start.
-**Next:** re-run the Phase 3 latency test under the corrected hardware layer and log results below.
 
 ---
 
@@ -428,8 +426,6 @@ This project's design never needs OpenPLC to touch real Pi GPIO — all data exc
 - [x] Latency test script working end-to-end
 - [x] GPIO/SPI conflict bug (Issue #1) found, root-caused, and fixed
 - [ ] Re-collect latency measurements post-fix (multiple trials, log distribution below)
-- [ ] Consider whether Wi-Fi vs. wired Ethernet (if Pi and Runtime are on separate hosts) affects results
-- [ ] Add a timeout back into the latency script's polling loop for robustness
 
 ---
 
@@ -438,4 +434,4 @@ This project's design never needs OpenPLC to touch real Pi GPIO — all data exc
 **2026-06-29**
 - Diagnosed and fixed Issue #1 (GPIO/SPI conflict from OpenPLC's Raspberry Pi hardware layer) using `pinctrl` before/after comparison.
 - Switched OpenPLC hardware layer to "Blank for Linux."
-- Updated latency test script to write-on-change, removed fixed loop delay in favor of 1 ms polling, switched pymodbus keyword to `device_id`.
+- Updated latency test script to write-on-change, removed fixed loop delay in favor of 1 ms polling, switched pymodbus keyword to `device_id` to match pymodbus version 3.13
