@@ -18,7 +18,7 @@ Dependencies:
     pip install adafruit-blinka adafruit-circuitpython-max31865 pymodbus
     (or install inside a venv — see experiment log for details)
 
-See experiments/RND_pt100_openplc_progress_log.md for full setup,
+See experiments/pt100_openplc_progress_log.md for full setup,
 OpenPLC program code, and Modbus map.
 """
 
