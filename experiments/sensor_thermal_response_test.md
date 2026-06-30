@@ -39,7 +39,7 @@ Every call to `sensor.temperature` waits on one of these conversions happening i
 ### If microsecond resolution is a hard requirement
 
 We would need to look into buying something else, I did some research and found a few possible options:
-- An RTD amplifier with a faster ADC than the MAX31865 (check conversion time specs before buying.
+- An RTD amplifier with a faster ADC than the MAX31865
 - A thermocouple instead of an RTD, paired with a faster amplifier; thermocouples themselves can have faster thermal response
 - Reading the RTD's analog output directly with a fast ADC, bypassing a packaged conversion chip's internal timing entirely
 
