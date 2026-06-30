@@ -1,0 +1,243 @@
+# Experiment: PT100 + MAX31865 Thermal Response Time
+
+> Living document — append new dated entries to the Changelog at the bottom.
+
+---
+
+## 1. What This Is Measuring
+
+This is pure sensor lag — **no OpenPLC, no PLC of any kind, no Modbus.** The runtime doesn't need to be running for this test at all. This script talks to the MAX31865 directly over SPI.
+
+```
+real temp changes → sensor reports it
+      [THIS TEST — the whole thing]
+```
+
+This is a deliberately different question from the PLC latency experiment (`RND_pt100_openplc_progress_log.md`), which measured how fast OpenPLC reacts to a value that's already sitting in a register. There's no PLC in this test, so there's nothing to count cycles of — earlier drafts of this doc and script mentioned "PLC cycles" here, which was wrong and has been removed. If you want the PLC side of the chain, that's the other experiment.
+
+What's actually being measured is the combined latency of:
+1. The PT100 wire physically heating or cooling (thermal mass)
+2. The MAX31865 converting the new resistance to a digital value
+3. The SPI transfer to the Pi
+4. Python reading the register
+
+All four collapse into one number per fraction of the step: onset, τ (63.2%), 90% settling, 95% settling.
+
+---
+
+## 2. Resolution Ceiling — Read This Before Running Anything
+
+You want this down to microseconds eventually. That goal runs into a hard physical limit with this specific sensor/amplifier, and it's worth knowing up front rather than discovering it after a confusing test run.
+
+**The MAX31865 chip itself is the bottleneck, not the Python loop.** Per the datasheet:
+
+- Single-shot conversion (the library's default mode): ~52ms with 60Hz noise filtering, ~62.5ms with 50Hz filtering
+- Continuous/auto-convert mode: ~20–21ms per conversion (50Hz filter) — faster, but still tens of milliseconds
+
+Every call to `sensor.temperature` waits on one of these conversions happening inside the chip. A tight Python loop, `sleep(0)`, no sleep at all — none of it changes this. The chip is doing real analog-to-digital work on a fixed internal clock; the loop around it is just waiting either way.
+
+**What this means concretely:** with this sensor, you cannot get response data with better than ~20ms resolution, and realistically closer to ~50-60ms unless `auto_convert` is enabled. Microsecond-resolution thermal response data is not achievable with this hardware, full stop — not a software problem, a chip problem.
+
+### What the script does about this
+
+Rather than silently giving you numbers that imply more precision than they have, the script measures its own real per-reading time first (Phase 0, before the plunge even happens) and reports it alongside every result. Any "response time" that comes out close to or below that floor should be treated as noise from the measurement process itself, not real sensor behavior — the script flags this automatically when onset happens within ~2 conversion cycles of t0.
+
+### If microsecond resolution is a hard requirement
+
+That's a different sensor/amplifier combination, not a script change. Options worth looking into if this becomes a real project need:
+- An RTD amplifier with a faster ADC than the MAX31865 (check conversion time specs before buying — this is the number that matters, not "accuracy" or "resolution" in the marketing sense)
+- A thermocouple instead of an RTD, paired with a faster amplifier — thermocouples themselves can have faster thermal response too depending on junction size
+- Reading the RTD's analog output directly with a fast ADC, bypassing a packaged conversion chip's internal timing entirely
+
+This is worth a conversation with your PI before spending money — it's possible the project's actual need is "fast enough to be meaningfully faster than the PLC scan cycle" rather than literally microseconds, in which case the current sensor plus `auto_convert=True` (~20ms) might already be sufficient depending on what the PLC side comes out to.
+
+---
+
+## 3. Why the Trigger Wire Matters
+
+Same idea as before: you need a `t0` for "plunge occurred" that's independent of the sensor, since the sensor is the thing being timed.
+
+**GPIO26 (Pin 37)** is bridged to GND at the exact moment of plunge. The script detects that LOW event and marks it as `t0`.
+
+### Wiring the trigger
+
+```
+Pin 37 (GPIO26) ──── [hold open until plunge] ──── GND (any GND pin)
+```
+
+Hold the two ends apart while the script is waiting. The instant you plunge the sensor, bridge the wire ends together. The script fires immediately.
+
+**Practical tip:** tape one end of the jumper to the side of the hot water cup. When you lower the sensor in, your other hand naturally bridges the wire.
+
+---
+
+## 4. Hardware Setup
+
+Same wiring as the PT100 latency experiment, plus the trigger wire.
+
+| Pi Pin | GPIO | Role |
+|--------|------|------|
+| 1      | 3V3  | MAX31865 VIN |
+| 6      | GND  | MAX31865 GND |
+| 19     | GPIO10 (MOSI) | MAX31865 SDI |
+| 21     | GPIO9  (MISO) | MAX31865 SDO |
+| 23     | GPIO11 (SCLK) | MAX31865 CLK |
+| 29     | GPIO5  | MAX31865 CS |
+| 37     | GPIO26 | Plunge trigger (bridge to GND) |
+| 39     | GND  | Trigger return |
+
+**Make sure OpenPLC is not running with the "Raspberry Pi" hardware layer active** — that config hijacks the SPI pins this script needs. See [Known Issues #1](../issues/KNOWN_ISSUES.md). Easiest fix: just stop the runtime entirely before running this test, since it isn't needed.
+
+---
+
+## 5. Software
+
+**Script:** [`scripts/sensor_thermal_response_test.py`](../scripts/sensor_thermal_response_test.py)
+
+**Dependencies:**
+
+```
+pip install adafruit-blinka adafruit-circuitpython-max31865
+sudo apt install python3-rpi.gpio
+```
+
+If using a venv, activate it first:
+```
+source temp-env/bin/activate
+```
+
+### Conversion mode
+
+At the top of the script:
+
+```python
+AUTO_CONVERT = True
+```
+
+`True` enables continuous conversion mode (~20-21ms/sample instead of ~52-65ms). The tradeoff is that the bias current stays on continuously, which can cause slight self-heating of the RTD over long periods — not a concern for a single plunge test that runs for 30 seconds, but worth turning off (`False`) if you ever leave the sensor running unattended for hours.
+
+---
+
+## 6. Running the Test — Step by Step
+
+### Before you start
+
+- Two containers: one with the starting medium (room-temp water or air), one with the step medium (hot water, ~50-60°C delta is plenty)
+- Trigger jumper wire ready but NOT bridged
+- OpenPLC runtime stopped (not needed for this test)
+
+### Phase 0 — Conversion rate measurement (automatic)
+
+The script first takes 30 readings back-to-back and times each one. This runs automatically at startup — no action needed, just watch it print your real sampling resolution:
+
+```
+Phase 0: Measuring real per-reading conversion time...
+
+  Per-reading time over 30 calls:
+    Min  : 19.84 ms  (19840 us)
+    Mean : 20.31 ms  (20310 us)
+    Max  : 21.02 ms  (21020 us)
+
+  >> This is your real sampling resolution: ~20.3 ms per sample.
+  >> Any 'response time' faster than this is not measurable with
+     this sensor/library combination, regardless of loop speed.
+```
+
+This number should be close to the datasheet spec for whatever `AUTO_CONVERT` mode you set. If it's wildly different (much slower), something else is competing for SPI bus time or CPU — check that nothing else is using the bus.
+
+### Phase 1 — Baseline collection
+
+Keep the sensor still in its starting medium. The script collects 30 readings and reports the mean and standard deviation:
+
+```
+Baseline : 23.441 C  (std dev = 0.031 C)
+```
+
+Low std dev (under ~0.1°C) means the sensor is stable. If it's noisy, let it settle longer and re-run.
+
+### Phase 2 — Arm and plunge
+
+The script waits, showing a live reading:
+```
+Current temp: 23.441 C   (waiting for trigger...)
+```
+
+In one motion: lower the sensor into the hot water AND bridge the trigger wire. The script fires the instant the pin goes LOW:
+```
+Trigger fired at 11:42:03.847 -- logging started!
+```
+
+### Phase 3 — Logging
+
+Logs for 30 seconds (configurable) at the conversion-limited rate measured in Phase 0. Keep the sensor submerged and still.
+
+### Phase 4 — Analysis
+
+Printed automatically, with every time shown in both ms and µs:
+
+```
+  Onset (>0.5 C change)
+       214.30 ms   (    214300 us)
+
+  Tau (63.2% of step)
+      1840.70 ms   (   1840700 us)
+
+  90% settling
+      4230.10 ms   (   4230100 us)
+
+  95% settling
+      5910.40 ms   (   5910400 us)
+```
+
+Note the µs column exists for consistency with the project's eventual goal, but given the ~20ms measurement floor from Phase 0, none of these numbers actually carry microsecond-level meaning — they're millisecond-resolution numbers expressed in a smaller unit, not microsecond-resolution measurements. The script will say so directly if onset comes out suspiciously close to the floor.
+
+Results also save to `sensor_response_TIMESTAMP.csv`.
+
+---
+
+## 7. Configuration Reference
+
+```python
+AUTO_CONVERT             = True   # faster (~20ms) vs default (~52-65ms)
+CONVERSION_RATE_SAMPLES  = 30     # Phase 0 sample count
+PRE_PLUNGE_SAMPLES       = 30     # baseline sample count
+POST_PLUNGE_SECONDS      = 30     # logging window after plunge
+NOISE_THRESHOLD          = 0.5    # C — set to ~3x baseline std dev
+```
+
+If analysis says "not reached in logging window," increase `POST_PLUNGE_SECONDS`.
+
+---
+
+## 8. Things That Can Go Wrong
+
+**Trigger fires before the plunge:** `t0` is wrong, onset looks artificially long. Re-run.
+
+**Onset flagged as "within 2 conversion cycles":** This is the script telling you the apparent onset might just be measurement noise from the conversion floor, not real sensor movement. Don't report this number as real latency without more trials.
+
+**Baseline std dev is high (>0.1°C):** Sensor isn't settled, or OpenPLC is running with the wrong hardware layer and fighting for the SPI bus. Stop the runtime, let the sensor sit, re-run.
+
+**90%/95% settling not reached:** Extend `POST_PLUNGE_SECONDS`. PT100s in still liquid can take 10+ seconds to fully settle.
+
+**Phase 0 numbers don't match datasheet at all:** Something else is using the SPI bus or competing for CPU. Check `dmesg` for SPI errors, confirm nothing else has the bus open.
+
+---
+
+## 9. Current Status
+
+- [ ] First trial run completed
+- [ ] Multiple trials collected for repeatability
+- [ ] Phase 0 conversion floor confirmed consistent across runs
+- [ ] Decision made on whether 20ms resolution is acceptable or a faster sensor/amplifier is needed
+
+---
+
+## 10. Changelog
+
+**2026-06-29**
+- Experiment designed based on PI suggestion (originally framed as "count PLC pings")
+- Clarified that this test does not involve OpenPLC at all — pure sensor lag, no PLC cycles to count
+- Researched MAX31865 datasheet conversion timing; confirmed ~20-65ms floor depending on mode, well above microsecond goal
+- Rewrote script to measure and report its own conversion floor (Phase 0) before the plunge test, and to flag results that fall within the noise floor
+- Added `auto_convert` toggle to use the faster ~20ms continuous mode instead of default ~52-65ms single-shot
+- Experiment doc rewritten to remove incorrect "PLC cycles" framing and document the resolution ceiling explicitly
