@@ -3,34 +3,12 @@
 sensor_thermal_response_test.py
 
 Measures the thermal response time of the PT100 + MAX31865 sensing chain
-ALONE — no OpenPLC, no Modbus, no PLC of any kind involved. This script
-talks to the sensor directly over SPI.
 
 What is being measured:
     physical temperature changes (plunge)
         -> MAX31865 converts resistance to digital
             -> SPI transfer to Pi
                 -> Python reads the value
-
-This is pure sensor lag. It has nothing to do with PLC scan cycles —
-there is no PLC running during this test, so there is nothing to count
-cycles of. (For PLC-side latency, see openplc_reaction_time_test.py,
-which is a completely separate question.)
-
-IMPORTANT — resolution ceiling:
-    The MAX31865 itself is the bottleneck, not this script. Per the
-    datasheet, a single conversion takes ~52ms (60Hz filter) or ~62.5ms
-    (50Hz filter). Continuous/auto-convert mode is faster at ~20-21ms
-    per conversion (50Hz), but that's still tens of milliseconds, not
-    microseconds. No amount of loop-tightening or sleep(0) changes this
-    — every reading waits on a real ADC conversion inside the chip.
-
-    This script measures and reports that conversion floor (Phase 0)
-    BEFORE the actual plunge test, so you always know your real
-    sampling resolution. If your project genuinely requires
-    microsecond-resolution thermal response, this sensor/amplifier
-    combination cannot deliver it — see the experiment doc for what
-    that would require instead.
 
 Trigger method:
     A GPIO pin (TRIGGER_PIN) is used as the plunge trigger.
@@ -50,10 +28,6 @@ Output:
 Dependencies:
     pip install adafruit-blinka adafruit-circuitpython-max31865
     sudo apt install python3-rpi.gpio
-
-Make sure the OpenPLC runtime is NOT running with hardware layer set to
-"Raspberry Pi" while running this — that config hijacks the SPI pins.
-See issues/KNOWN_ISSUES.md, Issue #1.
 """
 
 import time
@@ -65,7 +39,7 @@ import adafruit_max31865
 import RPi.GPIO as GPIO
 from datetime import datetime
 
-# ── Configuration ────────────────────────────────────────────────────────────
+# Configuration
 
 # PT100 / MAX31865
 CS_PIN       = board.D5
@@ -90,7 +64,7 @@ NOISE_THRESHOLD         = 0.5  # °C change from baseline needed to count as "on
 # Output
 OUTPUT_FILE = f"sensor_response_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
 
-# ── Hardware setup ───────────────────────────────────────────────────────────
+# Hardware setup
 
 spi = board.SPI()
 cs  = digitalio.DigitalInOut(CS_PIN)
@@ -106,9 +80,7 @@ GPIO.setmode(GPIO.BCM)
 GPIO.setup(TRIGGER_PIN, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 # Pin floats HIGH. Bridging to GND pulls it LOW -> that's the plunge event.
 
-
-# ── Helpers ──────────────────────────────────────────────────────────────────
-
+# Helpers
 def read_sensor():
     """Return (temperature_C, resistance_ohms) from the PT100."""
     return sensor.temperature, sensor.resistance
@@ -148,7 +120,7 @@ def fmt_time(ms):
     return f"{ms:>9.2f} ms   ({ms * 1000:>10.0f} us)"
 
 
-# ── Phase 0: Measure the real conversion rate ───────────────────────────────
+# Measure the real conversion rate
 
 print()
 print("=" * 64)
@@ -186,7 +158,7 @@ print(f"  >> Any 'response time' faster than this is not measurable with")
 print(f"     this sensor/library combination, regardless of loop speed.")
 print()
 
-# ── Phase 1: Baseline ────────────────────────────────────────────────────────
+# Baseline
 
 print("-" * 64)
 print("  Phase 1: Collecting baseline (keep sensor still in starting medium)...")
@@ -208,7 +180,7 @@ if baseline_std > 0.1:
     print("     settle longer before re-running, or check wiring/SPI noise.")
 print()
 
-# ── Phase 2: Wait for plunge trigger ────────────────────────────────────────
+# Wait for plunge trigger
 
 print("-" * 64)
 print(f"  Phase 2: Ready. Bridge GPIO{TRIGGER_PIN} -> GND the moment you plunge.")
@@ -226,7 +198,7 @@ trigger_time = datetime.now().strftime('%H:%M:%S.%f')[:-3]
 print(f"\n\n  Trigger fired at {trigger_time} -- logging started!")
 print()
 
-# ── Phase 3: Log post-plunge readings ───────────────────────────────────────
+# Log post-plunge readings
 
 print("  Phase 3: Logging...")
 print()
@@ -249,7 +221,7 @@ print()
 print(f"  Collected {len(post_readings)} samples over {POST_PLUNGE_SECONDS}s")
 print(f"  ({len(post_readings) / POST_PLUNGE_SECONDS:.1f} samples/sec actual)")
 
-# ── Phase 4: Analysis ───────────────────────────────────────────────────────
+# Analysis
 
 print()
 print("=" * 64)
@@ -298,7 +270,7 @@ if t95_ms is None:
     print(f"    Not reached in logging window")
 print()
 
-# ── Save CSV ─────────────────────────────────────────────────────────────────
+# Save CSV
 
 with open(OUTPUT_FILE, "w", newline="") as f:
     writer = csv.writer(f)
