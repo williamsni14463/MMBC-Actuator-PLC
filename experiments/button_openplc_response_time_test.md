@@ -1,4 +1,4 @@
-# Experiment: OpenPLC Button → LED Response Time Test
+# Experiment:Button Response Time Test
 
 This test measures how quickly the PLC reads a button press and reacts by turning on the LED.
 
