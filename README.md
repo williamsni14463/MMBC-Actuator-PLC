@@ -73,4 +73,4 @@ All issues/bugs are collected in [issues/KNOWN_ISSUES.md](issues/KNOWN_ISSUES.md
 
 ---
 
-> Questions or context on the project: this is part of ongoing work at MMBC/Fermilab. The goal is eventually to use a Pi-based PLC to control actuators in a real system — these experiments are building toward that.
+> The goal is eventually to use a Pi-based PLC to control an actuator & sensors in a real system, these experiments are building toward that.
