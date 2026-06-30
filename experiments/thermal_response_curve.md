@@ -1,4 +1,4 @@
-# Experiment: PT100 & MAX31865 Thermal Response Time
+# Experiment: PT100 & MAX31865 Thermal Response Curve
 
 ---
 
