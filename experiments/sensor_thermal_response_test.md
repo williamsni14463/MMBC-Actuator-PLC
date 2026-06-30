@@ -8,7 +8,6 @@ This measures the MAX31865 sensor lag, this script talks to the MAX31865 directl
 
 ```
 real temp changes → sensor reports it
-
 ```
 
 This is a deliberately different question from the PLC latency experiment (`pt100_openplc_progress_log.md`), which measured how fast OpenPLC reacts to a value that's already sitting in a register. There's no PLC in this test, so there's nothing to count cycles of.
