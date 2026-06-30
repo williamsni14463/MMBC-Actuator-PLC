@@ -1,7 +1,5 @@
 # Experiment: PT100 & MAX31865 Thermal Response Time
 
-> Living document — append new dated entries to the Changelog at the bottom.
-
 ---
 
 ## 1. What This Is Measuring
