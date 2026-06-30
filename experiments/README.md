@@ -1,6 +1,6 @@
 # Experiments
 
-These are my R&D logs — the actual research work I've been doing. Each file is a living document with the setup, progress, issues I hit, and results.
+These are my R&D logs with the actual research work I've been doing. Each file is a living document with the setup, progress, issues I hit, and results.
 
 | Experiment | File | Status |
 |------------|------|--------|
