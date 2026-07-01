@@ -1,25 +1,5 @@
 # Experiment: MAX31865 Conversion Time Verification + PT100 Thermal Response
 
-> Living document — append new dated entries to the Changelog at the bottom.
-
----
-
-## 1. What This Experiment Actually Measures (and Why It Changed)
-
-This experiment is two separate things that work together:
-
-**Part 1 — Verify the amplifier's conversion time.**
-The MAX31865 chip converts resistance to a digital number on its own internal clock. It signals "I'm done" by pulling the RDY pin LOW. By timing those pulses we get the true conversion interval — not a Python estimate, not a datasheet assumption, but the actual interval on this specific chip. This is what was originally being asked about.
-
-**Part 2 — Measure thermal lag using confirmed-fresh readings.**
-Once we know the real conversion interval, we run the plunge test gated on the RDY pin so that every logged sample is a guaranteed fresh conversion. Combined with a trigger that fires from the water itself (not a second hand), onset and settling numbers become meaningful and repeatable across trials.
-
-### Why the previous version was broken in two ways
-
-**Human timing error:** The old setup needed two simultaneous hand actions — dip the sensor AND bridge a separate jumper wire. Any gap between those (even 50ms) shifted the onset value by exactly that gap. That's why onset was jumping wildly between trials. The fix is to make the trigger a physical consequence of the dip itself: a wire attached to the sensor, with the water as the conductor.
-
-**Stale reads:** The old loop called `sensor.temperature` on a timer with no guarantee the chip had finished a new conversion. If Python asked before the ADC was done, it got the previous value — which looks like no movement when really the chip just hadn't updated yet. The fix is the RDY pin: only read when the chip explicitly says a fresh value is ready.
-
 ---
 
 ## 2. How the RDY Pin Works
