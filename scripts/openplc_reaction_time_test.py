@@ -11,15 +11,9 @@ Timing path measured:
         -> OpenPLC sets OutputBit (coil %QX0.0)
         -> Python detects OutputBit
 
-This measures: Modbus write + PLC scan + Modbus read
-NOT the PT100 thermal response time.
-
 Dependencies:
     pip install adafruit-blinka adafruit-circuitpython-max31865 pymodbus
-    (or install inside a venv — see experiment log for details)
-
-See experiments/pt100_openplc_progress_log.md for full setup,
-OpenPLC program code, and Modbus map.
+    (or install inside a venv)
 """
 
 import time
@@ -28,26 +22,26 @@ import digitalio
 import adafruit_max31865
 from pymodbus.client import ModbusTcpClient
 
-# --- PT100 Configuration ---
+# pt100 config
 CS_PIN = board.D5
 WIRES = 4
 RTD_NOMINAL = 100.0
 REF_RESISTOR = 430.0
 
-# --- OpenPLC Configuration ---
-PLC_IP = "127.0.0.1"   # change to Pi's actual IP if script runs on a different machine
+# OpenPLC config
+PLC_IP = "127.0.0.1"   # change to the Pi's  IP if script runs on a different machine
 PLC_PORT = 502
 DEVICE_ID = 1
 TEMP_REGISTER = 0       # %QW0 — Python writes temperature here
-OUTPUT_COIL = 0         # %QX0.0 — OpenPLC flips this when threshold is crossed
+OUTPUT_COIL = 0         # %QX0.0 — OpenPLC flips this to 1 when threshold is crossed
 
-# --- Test Parameters ---
+# Paramaters
 THRESHOLD_C = 30.0      # must match Threshold constant in the ST program (×100 = 3000)
 SCALE = 100             # multiply °C by this to send as integer over 16-bit register
 THRESHOLD_INT = int(THRESHOLD_C * SCALE)
 HYSTERESIS = 1.0        # °C below threshold before re-arming
 
-# --- Initialize PT100 ---
+# Initialize PT100
 spi = board.SPI()
 cs = digitalio.DigitalInOut(CS_PIN)
 sensor = adafruit_max31865.MAX31865(
@@ -57,7 +51,7 @@ sensor = adafruit_max31865.MAX31865(
     ref_resistor=REF_RESISTOR,
 )
 
-# --- Connect to OpenPLC ---
+# Connect to plc runtime
 client = ModbusTcpClient(PLC_IP, port=PLC_PORT)
 if not client.connect():
     raise RuntimeError("Could not connect to OpenPLC. Is the runtime running?")
@@ -76,7 +70,7 @@ try:
         scaled = int(round(temp * SCALE))
         scaled = max(0, min(scaled, 65535))  # clamp to valid 16-bit unsigned range
 
-        # Only write if value changed — avoids redundant Modbus traffic
+        # Only writes if value changes
         if scaled != last_written:
             client.write_register(TEMP_REGISTER, scaled, device_id=DEVICE_ID)
             last_written = scaled
@@ -93,7 +87,7 @@ try:
             t0 = time.perf_counter()
             client.write_register(TEMP_REGISTER, scaled, device_id=DEVICE_ID)
 
-            # Tight-poll for the coil to flip — no sleep, as fast as possible
+            # Tight-poll for the coil to flip
             while True:
                 rr = client.read_coils(OUTPUT_COIL, count=1, device_id=DEVICE_ID)
                 if not rr.isError() and rr.bits[0]:
@@ -101,7 +95,7 @@ try:
                     print(f"PLC Output ON   Latency = {latency_ms:.3f} ms\n")
                     armed = False
                     break
-            # Note: no timeout on the inner loop — if the PLC never reacts, this hangs.
+            # no timeout on the inner loop, if the PLC never reacts, this hangs.
             # Run pt100_test.py in a second terminal to confirm the sensor is alive.
 
         elif (not armed) and temp < (THRESHOLD_C - HYSTERESIS):
