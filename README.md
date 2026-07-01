@@ -12,21 +12,13 @@ This repo is a living document with setup guides, experiment logs, issues I ran 
 MMBC-Actuator-PLC/
 │
 ├── setup/                        # Step-by-step setup guides (do these first)
-│   ├── 1-raspberry-pi-ssh-setup.md
-│   ├── 2-openplc-runtime-setup.md
-│   └── 3-example-raspberry-pi-plc.md
-│
+│   
 ├── experiments/                  # My R&D logs for each experiment
-│   ├── pt100_openplc_progress_log.md
-│   └── openplc-response-time-test.md
 │
 ├── scripts/                      # Python scripts used in experiments
-│   ├── plc_response_test.py
-|   ├──openplc_reaction_time_test.py
-│   └── pt100_test.py
-├── issues/                       # Known issues & fixes in one place
-│   └── KNOWN_ISSUES.md
 │
+├── issues/                       # Known issues & fixes in one place
+│   
 └── README.md                     
 ```
 
@@ -42,15 +34,6 @@ If you're new to this setup, work through the **setup/** folder in order:
 
 Once setup is done, the **experiments/** folder has some R&D work I've been doing.
 
----
-
-## Experiments
-
-### [Response Time Test — Button → LED](experiments/button_openplc_response_time_test.md)
-Measures how fast the PLC reacts to a button press and turns on an LED. Uses a Python script to physically monitor the LED output line and time 50 presses. Found that the scan cycle time (originally 20ms) was the bottleneck — reduced to under 1ms.
-
-### [PT100 + Modbus Latency Test](experiments/pt100_openplc_progress_log.md)
-Measures end-to-end latency from a PT100 temperature sensor crossing a threshold → OpenPLC detecting it via Modbus → Python confirming the output bit changed. R
 ---
 
 ## Known Issues
