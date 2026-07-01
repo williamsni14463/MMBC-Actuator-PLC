@@ -2,39 +2,6 @@
 """
 verify_conversion_time.py
 
-Part 1 of 2 for the sensor response experiment.
-
-PURPOSE:
-    Verify the actual conversion cycle time of the MAX31865 amplifier
-    by watching the RDY (DRDY) pin directly. This is a hardware signal
-    that goes LOW the instant the chip finishes a conversion and new
-    data is available. By timing pulse-to-pulse intervals on that pin
-    we get the true conversion period — not a Python-level estimate,
-    not a datasheet assumption, the real measured interval on this
-    specific chip at room temperature.
-
-    This answers: "Is the amplifier actually converting at ~20-21ms
-    (continuous mode) or ~52-65ms (single-shot)?"
-
-WHAT DRDY / RDY DOES:
-    - Goes LOW  when a fresh conversion result is ready in the register
-    - Goes HIGH when the data register is read (SPI read clears it)
-    - In continuous (auto_convert) mode: pulses at a fixed rate set by
-      the chip's internal filter clock (~20-21ms for 50Hz filter)
-    - We measure falling-edge to falling-edge interval = one conversion
-      period
-
-WIRING (one new wire beyond normal PT100 setup):
-    Adafruit breakout RDY pin  ->  GPIO25 (Pi Pin 22)
-
-    The RDY pin is labeled "RDY" on the Adafruit breakout and sits in
-    the header row alongside VIN, GND, SDO, SDI, SCK, CS.
-
-OUTPUT:
-    - Live terminal printout of each interval
-    - Summary stats (min, mean, max, std dev) over N pulses
-    - CSV: conversion_timing_TIMESTAMP.csv
-
 Dependencies:
     pip install adafruit-blinka adafruit-circuitpython-max31865
     sudo apt install python3-rpi.gpio
