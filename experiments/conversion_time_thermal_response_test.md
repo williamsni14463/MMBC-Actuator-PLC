@@ -1,8 +1,8 @@
-# Experiment: MAX31865 Conversion Time Verification + PT100 Thermal Response
+# Experiment: MAX31865 Conversion Time Verification & PT100 Thermal Response
 
 ---
 
-## 2. How the RDY Pin Works
+## 1. How the RDY Pin Works
 
 DRDY (labeled **RDY** on the Adafruit breakout) goes LOW when a new conversion result is available in the data register. When a read operation of the RTD resistance data register occurs, DRDY returns HIGH.
 
@@ -19,9 +19,7 @@ chip finishes conversion
 
 ---
 
-## 3. Wiring Changes
-
-### New wire 1 — RDY pin
+## 2. Wiring
 ```
 Adafruit breakout "RDY" pin  ->  GPIO25 (Pi Pin 22)
 ```
@@ -41,9 +39,8 @@ The RDY pin is the last one in that row. Connect it to GPIO25 (Pi Pin 22) with a
 | 21     | GPIO9  (MISO) | MAX31865 SDO |
 | 23     | GPIO11 (SCLK) | MAX31865 CLK |
 | 29     | GPIO5  | MAX31865 CS |
-| 22     | GPIO25 | **NEW: RDY pin** |
+| 22     | GPIO25 | **RDY pin** |
 | 37     | GPIO26 | Trigger (water closes circuit to GND) |
-| 39     | GND   | Trigger return / MAX31865 GND |
 
 ---
 
@@ -56,7 +53,7 @@ Two scripts, run in order:
 | [`scripts/verify_conversion_time.py`](../scripts/verify_conversion_time.py) | Counts 100 RDY pulses and measures the interval. Saves verified mean to `verified_conversion_time_ms.txt`. |
 | [`scripts/sensor_thermal_response_drdy.py`](../scripts/sensor_thermal_response_drdy.py) | Runs the plunge test. Reads `verified_conversion_time_ms.txt` automatically if it exists. |
 
-**Dependencies** (same as before, plus `RPi.GPIO` which you may already have):
+**Dependencies**
 ```
 pip install adafruit-blinka adafruit-circuitpython-max31865
 sudo apt install python3-rpi.gpio
@@ -64,9 +61,9 @@ sudo apt install python3-rpi.gpio
 
 ---
 
-## 5. Part 1 — Running verify_conversion_time.py
+## Part 1
 
-You don't need the hot water bath for this. Just have the sensor sitting in air or room-temperature water, connected as normal.
+Have the sensor sitting in air or room-temperature water, connected as normal.
 
 ```
 sudo python3 verify_conversion_time.py
@@ -98,40 +95,19 @@ Then a summary:
   Difference         :  1.0%
 ```
 
-This tells you two things:
-1. Whether the chip is actually running at the expected rate (it should be within ~5% of datasheet)
-2. The exact floor — any thermal response time shorter than this mean is not resolvable by this sensor
+The suymmary tells us 2 things,
+1. Whether the chip is actually running at the expected rate of ~20ms conversion
+2. The exact floor, any thermal response time shorter than this mean is not resolvable by this sensor
 
 The mean is saved to `verified_conversion_time_ms.txt` and the thermal response script reads it automatically.
 
-### What if the rate looks wrong?
-
-If the deviation is large (>15%), check:
-- Is `AUTO_CONVERT = True` set? The two modes (continuous vs single-shot) have very different rates
-- Is the RDY pin wired correctly and not floating?
-- Run `dmesg | grep spi` to check for SPI bus errors
-
 ---
 
-## 6. Part 2 — Running sensor_thermal_response_drdy.py
-
-Now you need the hot water bath. Have both containers ready before starting.
+## Part 2
 
 ```
 sudo python3 sensor_thermal_response_drdy.py
 ```
-
-### Trigger test
-
-First thing the script does is print the current state of the trigger pin. Dip just the trigger wire in the water:
-
-```
-  Trigger test: dip ONLY the trigger wire in the water to confirm
-  it pulls the pin LOW. Result should be LOW, not HIGH.
-  Trigger pin currently: LOW (good)
-```
-
-If it says HIGH when the wire is in water, the water isn't conducting (try tap water not distilled), or the trigger wire isn't making contact.
 
 ### Baseline
 
@@ -144,16 +120,16 @@ Keep the sensor in its starting medium and let it collect 30 fresh readings. Wat
 ### The plunge
 
 When the script says "Waiting for trigger":
-1. Hold the sensor above (not in) the hot water, with the trigger wire also above it
-2. Lower **both together** in one smooth motion — the trigger wire enters the water at the same time as the sensor
+1. Hold the sensor above (not in) the hot water 
+2. Lower the sensor in one smooth motion along with connecting the jumper from GPIO 37 to GND
 3. Hold still once submerged
 
-The trigger fires the moment water completes the circuit. You'll see:
+The trigger fires the moment the circuit completes. You'll see:
 ```
   Trigger fired at 11:42:03.847 — logging started!
 ```
 
-### Reading the analysis
+### Analysis
 
 ```
   Baseline            : 23.4410 C
@@ -177,31 +153,3 @@ The trigger fires the moment water completes the circuit. You'll see:
 The conversion floor is printed next to the results so you always know your resolution limit. Onset is meaningful as long as it's well above the floor (several conversion cycles, not just 1-2). If onset is within 2 conversion cycles of t0, the script flags it — that means the "onset" you're seeing might just be the first conversion that happened to catch the new temperature, not a real dead-time measurement.
 
 ---
-
-## 7. Running Multiple Trials
-
-The drastic onset variation you saw before was the hand-timing problem. With the water trigger, trials should be much more consistent. Still worth running 5+ trials and comparing:
-
-- If onset is still varying a lot (>50ms), the trigger wire might not be making reliable contact (try taping it closer to the sensor tip)
-- If tau varies a lot but onset is stable, that's real — it reflects variation in how still the sensor is, water temperature consistency, and how deep it was submerged
-
----
-
-## 8. Current Status
-
-- [ ] RDY pin wired (GPIO25, Pin 22)
-- [ ] Water trigger wire attached to sensor housing
-- [ ] verify_conversion_time.py run, conversion rate confirmed
-- [ ] First plunge trial complete
-- [ ] 5+ trials collected, onset variability assessed
-
----
-
-## 9. Changelog
-
-**2026-06-30**
-- Identified two bugs in previous approach: (1) hand-timing error on trigger, (2) no guarantee of fresh readings between calls
-- Redesigned around DRDY/RDY pin: all reads now gated on confirmed fresh conversion
-- Redesigned trigger: water itself closes circuit, no second hand action
-- Split into two scripts: conversion time verification first, then thermal response
-- Previous script (`sensor_thermal_response_test.py`) retired — had no DRDY gating and used a trigger design that caused onset variability
