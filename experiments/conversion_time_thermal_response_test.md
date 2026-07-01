@@ -17,10 +17,6 @@ chip finishes conversion
                     -> [~20ms later] RDY goes LOW again
 ```
 
-Timing the falling-edge to falling-edge interval gives you the true conversion period.
-
-The Adafruit Arduino driver doesn't use the RDY pin to save a pin — which is why you've never wired it before. But the pin is broken out and accessible on the header row right alongside VIN, GND, SDO, SDI, SCK, CS.
-
 ---
 
 ## 3. Wiring Changes
@@ -34,16 +30,6 @@ Look at your MAX31865 breakout header. The pins in order are typically:
 `VIN  GND  CLK  SDO  SDI  CS  RDY`
 
 The RDY pin is the last one in that row. Connect it to GPIO25 (Pi Pin 22) with a jumper wire.
-
-### New wire 2 — Water trigger (replaces the old GND jumper)
-```
-One end: attached to sensor housing or taped alongside the PT100 probe
-Other end: any GND pin on the Pi (e.g. Pin 39)
-```
-
-The old trigger required bridging a wire with your free hand at the moment of dip — two movements that could be off by 50-500ms. This replaces that. The water bath is conductive (tap water is fine; distilled won't work). When the sensor enters the water, the wire touches the water, the circuit closes through the water to GND, and TRIGGER_PIN goes LOW automatically. One movement, one event.
-
-**Test this before running the experiment:** dip just the trigger wire in the water and check the script's trigger test output — it should say LOW.
 
 ### Full pin table
 
