@@ -1,6 +1,6 @@
 # Experiment: PT100 OpenPLC Reaction Time
 
-## 1. Project Goal
+## 1. Overview
 
 Measure how fast an OpenPLC Runtime v3 program can react to a real-world temperature change sensed by a PT100 RTD, by:
 
