@@ -112,4 +112,14 @@ After 50 button presses, a summary prints:
 
 Results are also saved to `plc_latency_results.csv` in the Pi's home directory.
 
-**Takeaway:** With the cycle time fixed, response times are pretty consistently in the 15–23ms range. More testing needed with different cycle time settings to characterize the floor.
+**Takeaway:** With the cycle time fixed to 20ms, response times are pretty consistently in the 1–20ms range. More testing needed with different cycle time settings to characterize the floor.
+
+---
+
+**Further Experimenting**
+
+This test excludes any sensors which makes the logic much simpler. Because of this, I'm going to look into how low I can get the cycle time in the PLC Editor before it breaks. That should prove what the floor is of a Pi PLC using OpenPLC.
+
+
+
+
