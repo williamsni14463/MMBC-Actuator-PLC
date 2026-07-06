@@ -2,8 +2,6 @@
 """
 modbus_latency_characterization.py
 
-
-
 Usage:
     python3 modbus_latency_characterization.py --cycle-ms 1 --samples 2000
     python3 modbus_latency_characterization.py --cycle-ms 0.5 --samples 2000
@@ -17,7 +15,6 @@ Arguments:
     --delay-ms   : pause between trials in ms (default 10). Gives the PLC
                    time to reset the coil between cycles. Reduce for faster
                    collection, increase if you see many back-to-back timeouts.
-                   Technically I could use 1 second, since we want the frequency to be 1 Hz
 
 Modbus map:
     %QW0   -> Holding register 0  (Python writes 1 to trigger, 0 to reset)
@@ -177,6 +174,14 @@ else:
     p99      = sorted_r[int(0.99 * n)]
     p999     = sorted_r[int(0.999 * n)] if n >= 1000 else None
 
+    # Sigma bounds — upper bound only (we care about worst-case latency, not fast outliers)
+    sigma3   = mean_ms + 3 * std_ms   # 99.73% of a normal distribution falls within this
+    sigma5   = mean_ms + 5 * std_ms   # 99.99994% — essentially "almost never" for normal dist
+
+    # Count samples outside each sigma bound
+    outside3 = [x for x in results if x > sigma3]
+    outside5 = [x for x in results if x > sigma5]
+
     # Spikes: samples above cycle_time (missed scans / OS jitter)
     spikes     = [x for x in results if x > CYCLE_MS]
     spike_pct  = len(spikes) / n * 100
@@ -201,6 +206,11 @@ else:
         lines.append(f"  99.9th percentile         : {p999:>8.4f} ms")
 
     lines += [
+        "-" * 62,
+        f"  3-sigma bound (mean + 3σ) : {sigma3:>8.4f} ms",
+        f"    samples outside         : {len(outside3):>4}  ({len(outside3)/n*100:.2f}%)",
+        f"  5-sigma bound (mean + 5σ) : {sigma5:>8.4f} ms",
+        f"    samples outside         : {len(outside5):>4}  ({len(outside5)/n*100:.2f}%)",
         "-" * 62,
         f"  OS jitter events (>{CYCLE_MS}ms)  : {len(spikes):>4}  ({spike_pct:.2f}% of samples)",
         f"  Timeouts                  : {timeouts:>4}",
@@ -246,12 +256,15 @@ else:
     with open(CSV_FILE, 'w', newline='') as f:
         writer = csv.writer(f)
         writer.writerow(['sample', 'latency_ms', 'cycle_time_ms',
-                         'above_cycle_time', 'above_floor'])
+                         'above_cycle_time', 'above_floor',
+                         'outside_3sigma', 'outside_5sigma'])
         for idx, val in enumerate(results, start=1):
-            above_cycle = 1 if val > CYCLE_MS else 0
-            above_floor = 1 if val > floor_est * 1.5 else 0
+            above_cycle  = 1 if val > CYCLE_MS else 0
+            above_floor  = 1 if val > floor_est * 1.5 else 0
+            out3         = 1 if val > sigma3 else 0
+            out5         = 1 if val > sigma5 else 0
             writer.writerow([idx, f"{val:.4f}", CYCLE_MS,
-                             above_cycle, above_floor])
+                             above_cycle, above_floor, out3, out5])
 
     print(f"  Summary saved to {TXT_FILE}")
     print(f"  Raw data saved to {CSV_FILE}")
