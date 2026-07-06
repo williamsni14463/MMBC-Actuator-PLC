@@ -19,6 +19,8 @@ chip finishes conversion
                     -> [~20ms later] RDY goes LOW again
 ```
 
+I thought this would be a more effective method than constantly polling for changes, instead it just waits for a direct signal before starting the time
+
 ---
 
 ## 2. Wiring
