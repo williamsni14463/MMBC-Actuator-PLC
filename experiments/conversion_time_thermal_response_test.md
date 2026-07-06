@@ -6,6 +6,8 @@
 
 DRDY (labeled **RDY** on the Adafruit breakout) goes LOW when a new conversion result is available in the data register. When a read operation of the RTD resistance data register occurs, DRDY returns HIGH.
 
+> LOW just means the voltage on the pin would be 0V and HIGH would be 3.3V
+
 So the cycle in continuous mode looks like:
 
 ```
