@@ -156,4 +156,6 @@ The trigger fires the moment the circuit completes. You'll see:
 
 The conversion floor is printed next to the results so you always know your resolution limit. Onset is meaningful as long as it's well above the floor (several conversion cycles, not just 1-2). If onset is within 2 conversion cycles of t0, the script flags it — that means the "onset" you're seeing might just be the first conversion that happened to catch the new temperature, not a real dead-time measurement.
 
+I would like to make this more accurate with a switch or something, right now it relies on the users ability to both plunge the sensor and connect the GND at the exact moment, so the onset can be VERY off if one is done before the other.
+
 ---
