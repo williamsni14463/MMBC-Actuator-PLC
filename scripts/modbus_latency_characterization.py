@@ -2,26 +2,7 @@
 """
 modbus_latency_characterization.py
 
-Automated latency characterization of the OpenPLC Modbus round trip.
-No hardware, no sensors, no button pressing. Runs a tight loop collecting
-thousands of samples to fully characterize the latency distribution.
 
-Signal path measured (Option C — pure Modbus):
-    Python writes trigger value to holding register (%QW0)
-        -> OpenPLC scan cycle picks it up
-            -> PLC logic evaluates (if %QW0 > 0: set %QX0.0 = TRUE)
-                -> Python reads coil (%QX0.0) back over Modbus
-
-This measures: Modbus write + PLC scan + Modbus read
-No GPIO, no sensors, no physical hardware required.
-
-What the results tell you:
-    - Floor (~min latency): fixed overhead from two Modbus TCP transactions
-      plus Python. Can't go lower than this regardless of scan cycle time.
-    - Typical range (0ms to cycle_time ms above floor): quantization from
-      landing at a random point in the scan window. Expected and normal.
-    - Spikes above cycle_time: OS scheduler preempting the PLC process,
-      causing a missed scan. These are real jitter events worth counting.
 
 Usage:
     python3 modbus_latency_characterization.py --cycle-ms 1 --samples 2000
@@ -36,22 +17,7 @@ Arguments:
     --delay-ms   : pause between trials in ms (default 10). Gives the PLC
                    time to reset the coil between cycles. Reduce for faster
                    collection, increase if you see many back-to-back timeouts.
-
-OpenPLC program (Structured Text):
-    VAR
-        TriggerReg : INT AT %QW0;
-        OutputBit  : BOOL AT %QX0.0;
-    END_VAR
-
-    IF TriggerReg > 0 THEN
-        OutputBit := TRUE;
-    ELSE
-        OutputBit := FALSE;
-    END_IF;
-
-    This is intentionally simple — the PLC just mirrors the register
-    state to the coil. Any latency measured is the communication +
-    scan overhead, not logic complexity.
+                   Technically I could use 1 second, since we want the frequency to be 1 Hz
 
 Modbus map:
     %QW0   -> Holding register 0  (Python writes 1 to trigger, 0 to reset)
