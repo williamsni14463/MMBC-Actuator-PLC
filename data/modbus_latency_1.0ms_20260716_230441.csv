@@ -1,3 +1,6 @@
+3-sigma bound = 1.1146 ms, 37 samples fall outside it (0.185%)
+5-sigma bound = 1.4679 ms, 0 samples fall outside it (0.000%)
+
 sample,latency_ms,cycle_time_ms,above_cycle_time,above_floor,outside_3sigma,outside_5sigma
 1,0.2900,1.0,0,0,0,0
 2,0.7359,1.0,0,1,0,0
