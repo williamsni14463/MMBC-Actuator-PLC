@@ -1,4 +1,4 @@
-# Pressure monitor — run instructions
+# Pressure monitor run instructions
 
 Chain: **Kulite CTL-312-500A → KSC-2 → Industrial Shields RPi PLC (0–10 V analog input)**
 Script: `pressure_monitor.py`
@@ -7,7 +7,7 @@ Script: `pressure_monitor.py`
 
 ## 1. One-time setup on the PLC
 
-The Industrial Shields libraries are usually pre-installed with their OS image. If not:
+Industrial shields dependacies
 
 ```bash
 sudo apt update && sudo apt install -y git python3-pip
@@ -21,7 +21,7 @@ git clone https://github.com/Industrial-Shields/python3-librpiplc
 cd python3-librpiplc && sudo pip3 install . && cd ..
 ```
 
-For the live graph: `pip3 install matplotlib` (headless logging + PNG work without it too).
+For a live graph: `pip3 install matplotlib`
 
 ## 2. Edit the CONFIG block at the top of the script
 
