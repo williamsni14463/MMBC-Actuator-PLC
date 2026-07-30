@@ -1,27 +1,8 @@
 # Setting Up the Tolomatic IMA44 Actuator with a Kollmorgen AKD2G Drive
 
-A plain-language guide to getting the MAMBA linear actuator moving. Read it top to
-bottom the first time — each step depends on the one before it.
-
 ---
 
-## 1. What you're building
-
-A **servo actuator** is a motor whose position is controlled precisely by a **drive**.
-Here the motor and a roller screw are built into one unit (the actuator), so when the
-motor turns, a rod pushes in or out. The drive's job is to send the motor exactly the
-right electricity, at exactly the right moment, to put the rod where you want it.
-
-Three things have to be true before the rod will move:
-1. The drive knows **what motor it's driving** (its electrical properties).
-2. The drive knows **where the motor's rotor is** (feedback).
-3. The drive is **allowed to deliver power** (safety and enable signals are satisfied).
-
-Most "it won't move" problems are one of these three not being set.
-
----
-
-## 2. The parts
+## 1. The parts
 
 | Part | Model | What it does |
 |---|---|---|
@@ -32,28 +13,19 @@ Most "it won't move" problems are one of these three not being set.
 | 24 V supply | any isolated 24 VDC PELV | Powers the drive's logic and the safety inputs. |
 | Software | Kollmorgen **WorkBench** | Where you configure and test the drive. |
 
-**Key idea — the winding matters.** The same actuator comes in different *windings*
-(MV21, MV23, MV43…). They have different electrical values. Yours is **MV43 (460 V)**.
-Using another winding's numbers will mis-scale everything, so the values in Section 5
-are specific to MV43.
-
 ---
 
-## 3. How it all connects
-
-You don't need to rewire for this guide, but here's the map so the terminal names make sense.
+## 2. How it all connects
 
 | Drive connector | What lands there |
 |---|---|
-| **X3** | Mains 480 V 3-phase (PE, L1, L2, L3) + the regen resistor + DC bus |
+| **X3** | Mains 480 V 3-phase (PE, L1, L2, L3) with the regen resistor in RE and DC+ |
 | **X1** | The hybrid cable — motor power **and** feedback, in one plug |
 | **X10** | 24 V logic supply (pin 1 = +24 V, pin 2 = GND) |
 | **X20** | Service Ethernet — plug your laptop here for WorkBench |
 | **X21** | Safety + enable signals (see below) |
 
-**The regen resistor (on X3):** connect it across **+DC (+RBext)** and **Re (RBext−)**,
-and **remove the small factory jumper between Ri and Re** — otherwise the drive's internal
-resistor and your external one fight each other.
+**The regen resistor (on X3):** connect it across **+DC (+RBext)** and **Re (RBext−)**.
 
 **The enable signals (on X21)** — the drive needs all of these before it will make torque:
 
@@ -65,18 +37,19 @@ resistor and your external one fight each other.
 | +24 V source | **B3** | from your PSU + |
 | Ground | **B4** | from your PSU − |
 
-*Why two STO pins?* **STO (Safe Torque Off)** is a safety function. Both channels
+**STO (Safe Torque Off)** is a safety function. Both channels
 must see 24 V for the motor to be allowed to move; drop either one and the drive
 instantly cuts motor power. Two independent channels means one can fail and the safety
-still works. For a bench test you can jumper A11, B11, and A5 all to B3 (24 V). On the
-real machine, STO must be wired into your safety/E-stop circuit.
+still works. 
+
+For the bench test, I just jumped A11, B11, B3, and A5 on the same cable. But for operation, they should get different power supplies for safety reasons.
 
 ---
 
-## 4. Setting it up in WorkBench — the order
+## 3. Setting it up in WorkBench 
 
 Connect your laptop to **X20**, open WorkBench, **New Project → Add New Device →
-Online – Ethernet**, pick the drive, connect.
+Online – Ethernet**, pick the drive, connect./
 
 Then do the following screens **in this order**. Order matters: the drive can't align
 the motor (Step 7) until it knows the motor (Step 5), and can't be tuned (Step 9) until
