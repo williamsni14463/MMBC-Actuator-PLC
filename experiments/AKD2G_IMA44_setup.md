@@ -57,13 +57,12 @@ it's aligned.
 
 ---
 
-## 5. Motor parameters (the numbers)
+## 4. Motor parameters
 
 Go to **Axis 1 → Motor**. Set **Motor Autoset = 0 (Off)** — this unlocks the fields so
-you can type. (Autoset only auto-fills for genuine Kollmorgen motors; yours is a
-Tolomatic, so you enter them by hand.)
+you can type.
 
-Enter these **exact MV43 values** (confirmed by FPE Automation in WorkBench units):
+Enter these **exact MV43 values**:
 
 | Field | Value | Unit |
 |---|---|---|
@@ -81,7 +80,7 @@ Enter these **exact MV43 values** (confirmed by FPE Automation in WorkBench unit
 | Maximum Voltage | **460** | Vrms |
 | Maximum Speed | **3500** | rpm |
 
-Then click **Create Motor** to save it as a custom motor.
+Then click **Create Motor** to save it as a custom motor, name it something memorable like IMA44.
 
 > **A useful sanity check.** For a healthy motor, EMF Constant ÷ Torque Constant ≈ 60.
 > Here: 108.258 ÷ 1.693717 = **63.9**. ✓ If you ever get a number near 127, your Kt/Ke
@@ -90,48 +89,54 @@ Then click **Create Motor** to save it as a custom motor.
 
 ---
 
-## 6. The other setup screens
+## 5. The other setup screens
 
 **Power** (Device Settings → Power): Input Mains = **AC**, Nominal AC Line ≈ **480 Vrms**,
-AC Line Phases = **3-phase**. *(This is your 7V/480 V drive — don't copy single-phase examples.)*
+AC Line Phases = **3-phase**. 
 
 **Motor Temperature** (Axis 1 → Motor → Motor Temperature): **127 – No Thermal Sensor.**
-*(Your actuator's sensor isn't wired to the drive, so this stops a false over-temp fault.)*
 
 **Feedback 1** (Device Settings → Feedback Devices → Feedback 1): disable the drive first.
 Look at the **"Feedback Identified"** field — it shows what the drive actually detects.
-Set **Feedback Selection** to match it (**46 – HIPERFACE DSL**, or **45 – SFD3**). Set
+Set **Feedback Selection** to match it (**46 – HIPERFACE DSL**). Set
 Mechanic Type = **0 – Rotary**.
 
-**Brake** (Axis 1 → Brake): Usage = **0 – Not Used.** *(Your actuator has no brake.)*
+**Brake** (Axis 1 → Brake): Usage = **0 – Not Used.**
 
 ---
 
-## 7. Commutation alignment (Wake & Shake) — the step that trips people
+## 6. Commutation alignment (Wake & Shake)
 
 **What it is:** the drive needs to know how the feedback's "zero" lines up with the
 motor's magnetic poles, so it energizes the coils at the right angle. That alignment
 number is the **commutation offset** (shown as *Motor Phase*). Get it wrong and the
-motor pushes against itself — you get a loud buzz and a **motor overload fault**.
+motor pushes against itself, you will get a loud beep and a **motor overload fault**.
 
 Go to **Axis 1 → Motor → Wake and Shake**:
-1. Set Method = **2 – Auto Wake and Shake.** ← always use this one.
+1. Set Method = **Commutation Alignment** 
 2. Click **ARM.**
-3. **Enable** the drive. It runs the alignment (~1 minute).
+3. **Enable** the Axis. It runs the alignment (~1 minute).
 4. Confirm it says **Successful** and Motor Phase is around **~100°**.
-5. Run it a second time — a good result repeats to about the same number.
 
-> **⚠️ The mistake that cost us a day:** switching to the *old* (non-Auto) Wake & Shake.
-> It landed a full phase off (**239°** instead of ~100°), and the next jog command threw
+Now use auto wake and shake
+1. Set Method = **2 - Auto Wake and Shake**
+2. Click **ARM.**
+3. **Enable** the Axis.
+4. Confirm it says **Successful* and motor phase is around **100**
+
+
+
+> **⚠️ The mistake that cost us a day:** switching to the non-Auto Wake & Shake, method 1.
+> It landed a full phase off (**241°** instead of ~100°), and the next jog command threw
 > a motor overload and broke tuning. **Only use Method 2 (Auto).** If you ever see ~120°
-> or ~240° instead of ~100°, re-run Auto Wake & Shake — don't try to move it.
+> or ~240° instead of ~100°, re-run the commutation alignment first, then the auto wake and shake.
 
 ---
 
-## 8. Units and Home
+## 7. Units and Home
 
-**Units** (Axis 1 → Units): Type of Mechanics = **Lead Screw**, Lead = **4 mm**
-(your `RN04` screw — *not* 5 mm), Motor = 1, Load = 1. *(This tells the drive how motor
+**Units** (Axis 1 → Units): Type of Mechanics = **Lead Screw**, Lead = **4 mm**,
+Motor = 1, Load = 1. *(This tells the drive how motor
 turns convert to millimeters of rod travel.)*
 
 **Home** (Axis 1 → Home): jog the rod to where you want "zero," then set
@@ -139,7 +144,11 @@ turns convert to millimeters of rod travel.)*
 
 ---
 
-## 9. Testing it with Jog Motion
+## 8. Testing it with Jog Motion
+
+**Autotune:** with motion confirmed, run **Axis 1 → Performance Servo Tuner** (Excitation
+= Automatic, Mode = Autotune, Start). It measures your real load and sets good control
+gains. 
 
 Now the fun part. Go to **Axis 1 → Motion → Jog Motion.**
 
@@ -153,44 +162,24 @@ keep the rod away from both physical end stops until you trust the motion. The r
 screw back-drives and there's no brake, so the rod won't hold position when the drive
 is disabled.
 
-**Autotune:** with motion confirmed, run **Axis 1 → Performance Servo Tuner** (Excitation
-= Automatic, Mode = Autotune, Start). It measures your real load and sets good control
-gains. The motor will jiggle on purpose during this — that's normal.
-
 ---
 
-## 10. SAVE YOUR WORK (don't skip this)
+## 9. SAVE the profile
 
 The moment it moves cleanly:
 - **Save To Device** — writes the config to the drive so it survives a power-cycle.
 - **File → Save** the WorkBench project to your computer.
 
-That saved file is your undo button. If the config ever gets scrambled, reload it
-instead of rebuilding from scratch.
-
 ---
 
-## 11. If something goes wrong
+## 10. If something goes wrong
 
 | Symptom | Most likely cause | Fix |
 |---|---|---|
 | Won't enable, says **STO** | A11 or B11 not at 24 V | Check both STO jumpers to B3 |
 | Won't enable, says **hardware disable** | A5 not at 24 V | Jumper A5 to B3 |
-| **Loud buzz + motor overload** on move | Bad commutation offset | Re-run **Auto** Wake & Shake, confirm ~100° |
+| **Loud buzz + motor overload** on move | Bad commutation offset | Re-run commutation alignment and auto Wake & Shake, confirm ~100° |
 | Autotune / motion fails after it worked | Commutation got clobbered | Re-run Auto Wake & Shake |
 | Motor data fields greyed out | Motor Autoset is On | Set Autoset = 0 (Off) |
 | Overloads easily / runs rough | Wrong Kt/Ke units or inductance | Check Ke÷Kt ≈ 60; inductance = 11.5 |
 | **Start completely over** | Config tangled | Parameter Load/Save → Reset to Factory Defaults, then redo from Step 4 |
-
----
-
-## 12. The short version (once you know it)
-
-1. Add device → Motor (Autoset **Off**, enter MV43 values, Create Motor)
-2. Power = 480 V / 3-phase → Motor Temp = 127 → Feedback = match Identified → Brake = Not Used
-3. **Auto** Wake & Shake → confirm **~100° Successful**
-4. Units = 4 mm lead → Home = current position
-5. Jog at low speed → Autotune
-6. **Save To Device + save the project file**
-
-The one rule to remember: **always use Auto Wake & Shake, and start every move slow.**
