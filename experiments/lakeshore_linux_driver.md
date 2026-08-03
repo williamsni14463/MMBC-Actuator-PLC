@@ -301,13 +301,3 @@ This validates that the Raspberry Pi can simultaneously acquire cryogenic sensor
 
 ---
 
-## Repository Structure
-
-```
-.
-├── ls240_driver.py      # Core native USB driver (LakeShore240 class)
-├── temp_poll.py         # Simple continuous temperature polling example
-├── temp_coil.py         # Threshold-driven PLC digital output demo
-├── usbx2.py             # Diagnostic/debugging script used during development
-└── README.md            # This file
-```
