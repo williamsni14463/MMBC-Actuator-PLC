@@ -26,7 +26,7 @@ PLC_MODEL = "RPIPLC_57AAR"
 
 
 def open_plc():
-    from rpiplc_lib import rpiplc
+    from librpiplc import rpiplc
     try:
         rpiplc.init(PLC_VER, PLC_MODEL)
     except TypeError:
