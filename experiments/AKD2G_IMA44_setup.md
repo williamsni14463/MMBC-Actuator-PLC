@@ -17,7 +17,7 @@
 
 ## 2. How it all connects
 
-| Drive connector | What lands there |
+| Drive connector | Cable to connect |
 |---|---|
 | **X3** | Mains 480 V 3-phase (PE, L1, L2, L3) with the regen resistor in RE and DC+ |
 | **X1** | The hybrid cable — motor power **and** feedback, in one plug |
