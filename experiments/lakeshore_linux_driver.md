@@ -254,22 +254,6 @@ The application:
 3. Drives a physical PLC digital output (`Q0.0`, configurable) **HIGH** when the threshold is exceeded and **LOW** when temperature falls below the reset point.
 4. Forces the output **LOW** on shutdown to guarantee a safe state.
 
-### PLC library dependency issue
-
-During implementation, the PLC control code initially failed with an import error because the Industrial Shields Python library was referenced incorrectly.
-
-**Attempted import:**
-```python
-from rpiplc_lib import rpiplc
-```
-
-**Correct import (once the library was properly installed):**
-```python
-import librpiplc
-```
-
-Changing the import resolved the issue without requiring any additional software installation beyond the standard build steps below.
-
 ### Installing the Industrial Shields PLC library
 
 ```bash
