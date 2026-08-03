@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
 """
-temp_coil.py — MAMBA bench proof-of-concept.
 Reads the Cernox (Lake Shore 240) and drives a PLC digital output ("coil") TRUE
-when temperature crosses the threshold. Real sensor input -> real PLC output.
+when temperature crosses the threshold. 
 
   temp > TRIP_C   -> coil TRUE   (warm the sensor with your fingers)
   temp < RESET_C  -> coil FALSE  (2 C hysteresis so it doesn't chatter)
